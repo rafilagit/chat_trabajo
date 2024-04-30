@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "1054010606330",
+    "project_id": "chattrabajo-98316",
+    "storage_bucket": "chattrabajo-98316.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1054010606330:android:716397649d331519793f43",
+        "android_client_info": {
+          "package_name": "com.dam.chat_Trabajo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDeMcSKf3yRtYRuiHZADJVsZI1K7kEGOUg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1054010606330:android:af59f30192c7b415793f43",
+        "android_client_info": {
+          "package_name": "com.dam.chat_trabajo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDeMcSKf3yRtYRuiHZADJVsZI1K7kEGOUg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1054010606330:android:7f82307a976b40c6793f43",
+        "android_client_info": {
+          "package_name": "com.dam.chatfirebase"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDeMcSKf3yRtYRuiHZADJVsZI1K7kEGOUg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

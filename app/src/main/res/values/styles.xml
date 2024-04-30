@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<style name="MiEstiloBoton" parent="Widget.AppCompat.Button">
+    <item name="android:background">#2196F3</item> <!-- Color de fondo -->
+    <item name="android:textColor">#FFFFFF</item> <!-- Color del texto -->
+    <item name="android:textSize">16sp</item> <!-- Tamaño del texto -->
+</style>
+
+</resources>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"> <!-- Fondo blanco -->
+
+    <RelativeLayout
+        android:layout_width="334dp"
+        android:layout_height="520dp"
+        android:layout_centerInParent="true"
+        android:layout_centerVertical="true"
+        tools:ignore="UselessParent">
+
+        <ImageView
+            android:id="@+id/imageViewLogo"
+            android:layout_width="wrap_content"
+            android:layout_height="238dp"
+            android:layout_centerHorizontal="true"
+            android:src="@drawable/descarga" />
+
+        <TextView
+            android:id="@+id/textViewWelcome"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/imageViewLogo"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:text="¡Bienvenido!"
+            android:textColor="#000000"
+            android:textSize="24sp" />
+
+        <Button
+            android:id="@+id/btnLoginGoogle"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/textViewWelcome"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:text="Iniciar sesión con Google"
+            android:backgroundTint="@color/colorAccent"/>
+
+
+
+        <Button
+            android:id="@+id/btnLoginUser"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/btnLoginGoogle"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:text="Iniciar sesión con Nombre de Usuario"
+            android:backgroundTint="@color/colorAccent"/>
+
+
+
+    </RelativeLayout>
+</RelativeLayout>
+
+
+
