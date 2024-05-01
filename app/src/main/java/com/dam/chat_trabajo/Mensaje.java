@@ -29,6 +29,27 @@ public class Mensaje {
         return fechaHora; // Retornamos la fecha y hora original
     }
 
+    // Métodos para obtener el año, mes, día, hora y minuto de la fecha y hora del mensaje
+    public int getYear() {
+        return Integer.parseInt(fechaHora.substring(6, 10));
+    }
+
+    public int getMonth() {
+        return Integer.parseInt(fechaHora.substring(3, 5));
+    }
+
+    public int getDay() {
+        return Integer.parseInt(fechaHora.substring(0, 2));
+    }
+
+    public int getHour() {
+        return Integer.parseInt(fechaHora.substring(11, 13));
+    }
+
+    public int getMinute() {
+        return Integer.parseInt(fechaHora.substring(14, 16));
+    }
+
     public Map<String, Object> toMap() {
         Map<String, Object> map = new HashMap<>();
         map.put("nombreUsuario", nombreUsuario);
