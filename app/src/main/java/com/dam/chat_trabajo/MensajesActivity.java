@@ -1,5 +1,6 @@
 package com.dam.chat_trabajo;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -38,11 +39,29 @@ public class MensajesActivity extends AppCompatActivity {
     private FirebaseAuth auth;
     private FirebaseUser usuario;
     private ListenerRegistration mensajesListener;
+    private String nombreSala;
+    private String idSala;
+    private ArrayList<String> participantesSala;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mensajes);
+
+        // Recuperar los parámetros del Intent
+        Intent intent = getIntent();
+        if (intent != null) {
+             nombreSala = intent.getStringExtra("nombreSala");
+             idSala = intent.getStringExtra("idSala");
+             participantesSala = intent.getStringArrayListExtra("participantesSala");
+
+            // Ahora puedes usar estos datos como desees
+            Log.d("MensajesActivity", "Nombre de la sala: " + nombreSala);
+            Log.d("MensajesActivity", "ID de la sala: " + idSala);
+            Log.d("MensajesActivity", "Participantes de la sala: " + participantesSala);
+        }
+
+
 
         listView = findViewById(R.id.listView);
         editTextMensaje = findViewById(R.id.editTextMensaje);
@@ -59,12 +78,12 @@ public class MensajesActivity extends AppCompatActivity {
         buttonEnviar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                enviarMensaje();
+                enviarMensaje(nombreSala, idSala, participantesSala);
             }
         });
 
         // Suscribir al listener en tiempo real para obtener mensajes
-        suscribirListenerMensajes();
+        suscribirListenerMensajes(nombreSala, idSala, participantesSala);
 
         // Agregar un Listener al botón de scroll hacia abajo
         botonScrollAbajo.setOnClickListener(new View.OnClickListener() {
@@ -107,16 +126,17 @@ public class MensajesActivity extends AppCompatActivity {
         return lastItemPosition >= lastVisiblePosition && lastVisiblePosition > 0;
     }
 
-    private void suscribirListenerMensajes() {
+    private void suscribirListenerMensajes(String nombreSala, String idSala, ArrayList<String> participantesSala) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         // Obtener los nombres de todos los usuarios
-        obtenerNombresUsuarios(nombresUsuarios -> {
             // Iterar sobre cada nombre de usuario
-            for (String nombre : nombresUsuarios) {
+            for (String nombre : participantesSala) {
                 // Suscribirse a los cambios en la colección de mensajes de cada usuario
-                db.collection("messages")
-                        .document("Mensajes")
+                db.collection("chat")
+                        .document("salas")
+                        .collection(idSala)
+                        .document(nombreSala)
                         .collection(nombre)
                         .addSnapshotListener((queryDocumentSnapshots, error) -> {
                             if (error != null) {
@@ -125,13 +145,12 @@ public class MensajesActivity extends AppCompatActivity {
                             }
 
                             // Llamar al método obtenerMensajes() para actualizar la lista de mensajes
-                            obtenerMensajes();
+                            obtenerMensajes(nombreSala, idSala, participantesSala);
                         });
             }
-        });
     }
 
-    private void obtenerMensajes() {
+    private void obtenerMensajes(String nombreSala, String idSala, ArrayList<String> participantesSala) {
         if (usuario != null) {
             FirebaseFirestore db = FirebaseFirestore.getInstance();
             String nombreUsuario = obtenerNombreUsuario(usuario.getEmail());
@@ -139,8 +158,10 @@ public class MensajesActivity extends AppCompatActivity {
                 List<Mensaje> todosMensajes = new ArrayList<>(); // Lista para contener todos los mensajes
 
                 // Obtener los mensajes del usuario actual
-                db.collection("messages")
-                        .document("Mensajes")
+                db.collection("chat")
+                        .document("salas")
+                        .collection(idSala)
+                        .document(nombreSala)
                         .collection(nombreUsuario)
                         .get()
                         .addOnCompleteListener(task -> {
@@ -154,69 +175,69 @@ public class MensajesActivity extends AppCompatActivity {
                                     }
                                 }
                                 // Obtener los mensajes de los otros usuarios
-                                obtenerNombresUsuarios(nombresUsuarios -> {
-                                    nombresUsuarios.remove(nombreUsuario);
-                                    for (String nombre : nombresUsuarios) {
-                                        db.collection("messages")
-                                                .document("Mensajes")
-                                                .collection(nombre)
-                                                .get()
-                                                .addOnCompleteListener(otherTask -> {
-                                                    if (otherTask.isSuccessful()) {
-                                                        for (DocumentSnapshot mensajeDoc : otherTask.getResult()) {
-                                                            String mensajeTexto = mensajeDoc.getString("contenidoMensaje");
-                                                            String fechaHora = mensajeDoc.getString("fechaHoraOriginal");
-                                                            if (mensajeTexto != null && fechaHora != null) {
-                                                                Mensaje mensaje = new Mensaje(nombre, mensajeTexto, fechaHora);
-                                                                todosMensajes.add(mensaje);
-                                                            }
+                                participantesSala.remove(nombreUsuario);
+                                for (String nombre : participantesSala) {
+                                    db.collection("chat")
+                                            .document("salas")
+                                            .collection(idSala)
+                                            .document(nombreSala)
+                                            .collection(nombre)
+                                            .get()
+                                            .addOnCompleteListener(otherTask -> {
+                                                if (otherTask.isSuccessful()) {
+                                                    for (DocumentSnapshot mensajeDoc : otherTask.getResult()) {
+                                                        String mensajeTexto = mensajeDoc.getString("contenidoMensaje");
+                                                        String fechaHora = mensajeDoc.getString("fechaHoraOriginal");
+                                                        if (mensajeTexto != null && fechaHora != null) {
+                                                            Mensaje mensaje = new Mensaje(nombre, mensajeTexto, fechaHora);
+                                                            todosMensajes.add(mensaje);
                                                         }
-                                                        // Ordenar todos los mensajes por fecha y hora
-                                                        Collections.sort(todosMensajes, new Comparator<Mensaje>() {
-                                                            @Override
-                                                            public int compare(Mensaje m1, Mensaje m2) {
-                                                                // Comparar por año
-                                                                int yearComparison = Integer.compare(m1.getYear(), m2.getYear());
-                                                                if (yearComparison != 0) {
-                                                                    return yearComparison;
-                                                                }
-
-                                                                // Comparar por mes
-                                                                int monthComparison = Integer.compare(m1.getMonth(), m2.getMonth());
-                                                                if (monthComparison != 0) {
-                                                                    return monthComparison;
-                                                                }
-
-                                                                // Comparar por día
-                                                                int dayComparison = Integer.compare(m1.getDay(), m2.getDay());
-                                                                if (dayComparison != 0) {
-                                                                    return dayComparison;
-                                                                }
-
-                                                                // Comparar por hora
-                                                                int hourComparison = Integer.compare(m1.getHour(), m2.getHour());
-                                                                if (hourComparison != 0) {
-                                                                    return hourComparison;
-                                                                }
-
-                                                                // Comparar por minuto
-                                                                return Integer.compare(m1.getMinute(), m2.getMinute());
-                                                            }
-                                                        });
-                                                        // Limpiar el adaptador y agregar los mensajes ordenados
-                                                        adapter.clear();
-                                                        adapter.addAll(todosMensajes);
-                                                        if (canScrollDown(listView)) {
-                                                            botonScrollAbajo.setVisibility(View.VISIBLE);
-                                                        } else {
-                                                            botonScrollAbajo.setVisibility(View.GONE);
-                                                        }
-                                                    } else {
-                                                        Log.e("Error", "Error al obtener los mensajes de otros usuarios", otherTask.getException());
                                                     }
-                                                });
-                                    }
-                                });
+                                                    // Ordenar todos los mensajes por fecha y hora
+                                                    Collections.sort(todosMensajes, new Comparator<Mensaje>() {
+                                                        @Override
+                                                        public int compare(Mensaje m1, Mensaje m2) {
+                                                            // Comparar por año
+                                                            int yearComparison = Integer.compare(m1.getYear(), m2.getYear());
+                                                            if (yearComparison != 0) {
+                                                                return yearComparison;
+                                                            }
+
+                                                            // Comparar por mes
+                                                            int monthComparison = Integer.compare(m1.getMonth(), m2.getMonth());
+                                                            if (monthComparison != 0) {
+                                                                return monthComparison;
+                                                            }
+
+                                                            // Comparar por día
+                                                            int dayComparison = Integer.compare(m1.getDay(), m2.getDay());
+                                                            if (dayComparison != 0) {
+                                                                return dayComparison;
+                                                            }
+
+                                                            // Comparar por hora
+                                                            int hourComparison = Integer.compare(m1.getHour(), m2.getHour());
+                                                            if (hourComparison != 0) {
+                                                                return hourComparison;
+                                                            }
+
+                                                            // Comparar por minuto
+                                                            return Integer.compare(m1.getMinute(), m2.getMinute());
+                                                        }
+                                                    });
+                                                    // Limpiar el adaptador y agregar los mensajes ordenados
+                                                    adapter.clear();
+                                                    adapter.addAll(todosMensajes);
+                                                    if (canScrollDown(listView)) {
+                                                        botonScrollAbajo.setVisibility(View.VISIBLE);
+                                                    } else {
+                                                        botonScrollAbajo.setVisibility(View.GONE);
+                                                    }
+                                                } else {
+                                                    Log.e("Error", "Error al obtener los mensajes de otros usuarios", otherTask.getException());
+                                                }
+                                            });
+                                }
                             } else {
                                 Log.e("Error", "Error al obtener los mensajes del usuario actual", task.getException());
                             }
@@ -225,7 +246,8 @@ public class MensajesActivity extends AppCompatActivity {
         }
     }
 
-    private void enviarMensaje() {
+
+    private void enviarMensaje(String nombreSala, String idSala, ArrayList<String> participantesSala) {
         String mensaje = editTextMensaje.getText().toString().trim();
         if (!mensaje.isEmpty()) {
             FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -238,14 +260,16 @@ public class MensajesActivity extends AppCompatActivity {
 
                     // Guardar el mensaje junto con la fecha y hora en Firestore
                     Mensaje nuevoMensaje = new Mensaje(nombreUsuario, mensaje, fechaHora);
-                    db.collection("messages")
-                            .document("Mensajes")
+                    db.collection("chat")
+                            .document("salas")
+                            .collection(idSala)
+                            .document(nombreSala)
                             .collection(nombreUsuario)
                             .add(nuevoMensaje.toMap())
                             .addOnSuccessListener(documentReference -> {
                                 Toast.makeText(MensajesActivity.this, "Mensaje enviado correctamente", Toast.LENGTH_SHORT).show();
                                 // Después de enviar el mensaje, actualizar la lista
-                                new Handler().postDelayed(this::obtenerMensajes, 1500);
+                                new Handler().postDelayed(() -> obtenerMensajes(nombreSala, idSala, participantesSala), 1500);
                             })
                             .addOnFailureListener(e -> Toast.makeText(MensajesActivity.this, "Error al enviar el mensaje: " + e.getMessage(), Toast.LENGTH_SHORT).show());
                 }
@@ -257,6 +281,7 @@ public class MensajesActivity extends AppCompatActivity {
         }
     }
 
+
     private String obtenerNombreUsuario(String email) {
         if (email != null && email.contains("@")) {
             return email.split("@")[0];
@@ -264,21 +289,7 @@ public class MensajesActivity extends AppCompatActivity {
         return null;
     }
 
-    private void obtenerNombresUsuarios(OnUsuariosObtenidosListener listener) {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("messages")
-                .document("usuarios")
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        List<String> nombresUsuarios = new ArrayList<>(documentSnapshot.getData().keySet());
-                        listener.onUsuariosObtenidos(nombresUsuarios);
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("Error", "Error al obtener los usuarios", e);
-                });
-    }
+
 
     interface OnUsuariosObtenidosListener {
         void onUsuariosObtenidos(List<String> nombresUsuarios);

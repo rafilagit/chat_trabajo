@@ -1,0 +1,32 @@
+<!-- item_sala.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <TextView
+        android:id="@+id/btnSala"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Nombre de la Sala"
+        android:textSize="20sp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/tvParticipantes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Participantes: Usuario1, Usuario2, Usuario3"
+        android:textSize="14sp"/>
+
+    <TextView
+        android:id="@+id/tvIdSala"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ID de la Sala: 123456"
+        android:textSize="14sp"/>
+
+</LinearLayout>

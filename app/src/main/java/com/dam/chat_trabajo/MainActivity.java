@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private SalasAdapter salasAdapter;
     private List<Sala> salasList;
+    private ListView listViewSalas;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,20 +64,40 @@ public class MainActivity extends AppCompatActivity {
 
             // Inicializar la lista de salas y el adaptador
             salasList = new ArrayList<>();
-            salasAdapter = new SalasAdapter(this, salasList);
+            salasAdapter = new SalasAdapter(this, salasList, obtenerNombreUsuario(usuario.getEmail()));
 
             // Configurar la ListView
-            ListView listViewSalas = findViewById(R.id.listViewSalas);
+            listViewSalas = findViewById(R.id.listViewSalas);
             listViewSalas.setAdapter(salasAdapter);
+
+            // Configurar el OnItemClickListener
+            listViewSalas.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    // Obtener los datos de la sala seleccionada
+                    Sala salaSeleccionada = salasList.get(position);
+                    Log.d("sala", "Sala seleccionada: " + salaSeleccionada.getNombre());
+
+                    // Crear un intent para la actividad de mensajes
+                    Intent intent = new Intent(MainActivity.this, MensajesActivity.class);
+
+                    // Agregar parámetros extra al intent
+                    intent.putExtra("nombreSala", salaSeleccionada.getNombre());
+                    intent.putExtra("idSala", salaSeleccionada.getId());
+                    intent.putStringArrayListExtra("participantesSala", new ArrayList<>(salaSeleccionada.getParticipantes()));
+
+                    // Iniciar la actividad de mensajes
+                    startActivity(intent);
+                    Log.d("sala", "Iniciando MensajesActivity...");
+                }
+            });
 
             // Obtener y mostrar las salas existentes
             mostrarSalas();
             suscribirListenerSalas();
-
         }
 
         Button botonCerrarSesion = findViewById(R.id.logout);
-        Button botonMensajes = findViewById(R.id.mensajes);
         Button botonCrearSala = findViewById(R.id.crearSala);
 
         botonCerrarSesion.setOnClickListener(new View.OnClickListener() {
@@ -89,13 +110,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        botonMensajes.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), MensajesActivity.class);
-                startActivity(intent);
-            }
-        });
 
         botonCrearSala.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -113,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
                         if (!queryDocumentSnapshots.isEmpty()) {
                             for (DocumentSnapshot document : queryDocumentSnapshots.getDocuments()) {
+                                // Obtener datos de la sala
                                 String idSala = document.getId();
                                 String nombreSala = document.getString("nombre");
                                 String participantesString = (String) document.get("usuarios");
@@ -127,9 +142,19 @@ public class MainActivity extends AppCompatActivity {
                                 }
                                 // Verificar si el usuario actual está entre los participantes
                                 if (participantes != null && participantes.contains(obtenerNombreUsuario(usuario.getEmail()))) {
-                                    // Crear objeto Sala y añadirlo a la lista
-                                    Sala sala = new Sala(idSala, nombreSala, participantes);
-                                    salasList.add(sala);
+                                    // Verificar si la sala ya se ha mostrado
+                                    boolean salaExistente = false;
+                                    for (Sala sala : salasList) {
+                                        if (sala.getId().equals(idSala)) {
+                                            salaExistente = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!salaExistente) {
+                                        // Crear objeto Sala y añadirlo a la lista
+                                        Sala sala = new Sala(idSala, nombreSala, participantes);
+                                        salasList.add(sala);
+                                    }
                                 }
                             }
                             // Notificar al adaptador que los datos han cambiado
@@ -214,17 +239,27 @@ public class MainActivity extends AppCompatActivity {
                             .collection("salas")
                             .document(idSala)
                             .set(sala)
-                            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(Void aVoid) {
-                                    Toast.makeText(MainActivity.this, "Sala creada correctamente", Toast.LENGTH_SHORT).show();
+                            .addOnSuccessListener(aVoid -> {
+                                Toast.makeText(MainActivity.this, "Sala creada correctamente", Toast.LENGTH_SHORT).show();
+
+                                // Crear colecciones dentro de la sala para cada participante
+                                for (String participante : usuariosSeleccionados) {
+                                    db.collection("chat")
+                                            .document("salas")
+                                            .collection(idSala)
+                                            .document(nombreSala)
+                                            .collection(participante)
+                                            .add(new HashMap<>())
+                                            .addOnSuccessListener(aVoid1 -> {
+                                                Log.d("MainActivity", "Colección creada para participante: " + participante);
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                Log.e("MainActivity", "Error al crear la colección para participante: " + participante, e);
+                                            });
                                 }
                             })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    Toast.makeText(MainActivity.this, "Error al crear la sala: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                }
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(MainActivity.this, "Error al crear la sala: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                             });
                 });
                 builder.setNegativeButton("Cancelar", (dialog, which) -> {
@@ -241,10 +276,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     private void obtenerNombresUsuarios(OnUsuariosObtenidosListener listener) {
         Log.d("Mio", "Obteniendo nombres de usuarios");
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("messages")
+        db.collection("chat")
                 .document("usuarios")
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
@@ -289,7 +325,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void crearUsuarioDDBB(String nombreUsuario) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        DocumentReference usuarioDocRef = db.collection("messages").document("usuarios");
+        DocumentReference usuarioDocRef = db.collection("chat").document("usuarios");
 
         // Verificar si ya existe un campo con el nombre de usuario
         usuarioDocRef.get()
@@ -300,7 +336,7 @@ public class MainActivity extends AppCompatActivity {
                                 .update(nombreUsuario, true)
                                 .addOnSuccessListener(aVoid -> {
                                     // Campo de usuario actualizado exitosamente
-                                    Toast.makeText(MainActivity.this, "Es tu primera vez en el chat?"+nombreUsuario, Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(MainActivity.this, "Es tu primera vez en el chat? "+nombreUsuario, Toast.LENGTH_SHORT).show();
                                 })
                                 .addOnFailureListener(e -> {
                                     // Error al actualizar el campo de usuario
@@ -317,7 +353,19 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    private void abrirMensajesActivity(String nombreSala, String idSala, List<String> participantes) {
+        Intent intent = new Intent(MainActivity.this, MensajesActivity.class);
+        intent.putExtra("nombreSala", nombreSala);
+        intent.putExtra("idSala", idSala);
+        intent.putStringArrayListExtra("participantesSala", new ArrayList<>(participantes));
+        startActivity(intent);
+    }
+
+
+
     interface OnUsuariosObtenidosListener {
         void onUsuariosObtenidos(List<String> nombresUsuarios);
     }
 }
+
+

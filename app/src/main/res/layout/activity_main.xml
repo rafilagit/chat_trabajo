@@ -7,11 +7,6 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/user_details"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Entrada a la sala" />
 
     <Button
         android:id="@+id/logout"
@@ -19,12 +14,6 @@
         android:layout_height="wrap_content"
         android:text="@string/cerrar_sesion" />
 
-    <Button
-        android:id="@+id/mensajes"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Escribir en la BD Firebase"
-        android:layout_marginTop="16dp" />
 
     <Button
         android:id="@+id/crearSala"
