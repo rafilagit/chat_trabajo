@@ -40,7 +40,7 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         userPass=findViewById(R.id.mailsend);
         flechaVolver=findViewById(R.id.botonBolver);
 
-        firebaseAuth = firebaseAuth.getInstance();
+        firebaseAuth = FirebaseAuth.getInstance();
 
         flechaVolver.setOnClickListener(new View.OnClickListener() {
             @Override
