@@ -1,3 +1,4 @@
+
 package com.dam.chat_trabajo;
 
 import androidx.annotation.NonNull;
@@ -22,7 +23,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 public class RegisterActivity extends AppCompatActivity {
-    TextInputEditText editTextemail , editTextPassword;
+    TextInputEditText editTextemail , editTextPassword,editTextPassword2;
     Button botonreg;
     FirebaseAuth mAuth;
     ProgressBar progressBar;
@@ -47,6 +48,7 @@ public class RegisterActivity extends AppCompatActivity {
         mAuth=FirebaseAuth.getInstance();
         editTextemail=findViewById(R.id.email);
         editTextPassword=findViewById(R.id.password);
+        editTextPassword2=findViewById(R.id.password2);
         botonreg=findViewById(R.id.btn_register);
         progressBar=findViewById(R.id.progress_bar);
         textview=findViewById(R.id.loginNow);
@@ -66,24 +68,28 @@ public class RegisterActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 progressBar.setVisibility(View.VISIBLE);
-                String email,password;
+                String email,password,password2;
                 email=String.valueOf(editTextemail.getText());
                 password=String.valueOf(editTextPassword.getText());
+                password2=String.valueOf(editTextPassword2.getText());
 
                 if (TextUtils.isEmpty(email)) {
                     // El campo de correo electrónico está vacío
                     // Aquí puedes mostrar un mensaje de error al usuario o realizar otra acción
-                    Toast.makeText(RegisterActivity.this, "Por favor, ingrese su correo electrónico", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(RegisterActivity.this, "Por favor, ingrese su correo electrónico", Toast.LENGTH_LONG).show();
                     return;
                 }
 
-                if (TextUtils.isEmpty(password)) {
+                if (TextUtils.isEmpty(password)||TextUtils.isEmpty(password2)) {
                     // El campo de correo electrónico está vacío
                     // Aquí puedes mostrar un mensaje de error al usuario o realizar otra acción
-                    Toast.makeText(RegisterActivity.this, "Por favor, ingrese una contraseña", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(RegisterActivity.this, "Por favor, ingrese una contraseña en los 2 apartados", Toast.LENGTH_LONG).show();
                     return;
                 }
-
+                if (!password.equals(password2)) {
+                    Toast.makeText(RegisterActivity.this, "Las contraseñas no son iguales, por favor introduzca la contraseña correctamente", Toast.LENGTH_LONG).show();
+                    return;
+                }
                 mAuth.createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                             @Override

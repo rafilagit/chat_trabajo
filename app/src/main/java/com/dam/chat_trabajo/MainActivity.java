@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
         usuario = auth.getCurrentUser();
         db = FirebaseFirestore.getInstance();
 
+
         if (usuario == null) {
             // Si el usuario no está autenticado, redirigir a la pantalla de inicio de sesión
             Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
@@ -59,12 +60,12 @@ public class MainActivity extends AppCompatActivity {
             // Obtener el nombre de usuario a partir del correo electrónico
             String nombreUsuario = obtenerNombreUsuario(usuario.getEmail());
 
-            // Crear un documento para el usuario en la colección "usuarios"
+            // Crear un campo en el documento usuarios de la coleccion chat--> chat/usuarios
             crearUsuarioDDBB(nombreUsuario);
 
             // Inicializar la lista de salas y el adaptador
             salasList = new ArrayList<>();
-            salasAdapter = new SalasAdapter(this, salasList, obtenerNombreUsuario(usuario.getEmail()));
+            salasAdapter = new SalasAdapter(this, salasList, nombreUsuario);
 
             // Configurar la ListView
             listViewSalas = findViewById(R.id.listViewSalas);
@@ -121,13 +122,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void mostrarSalas() {
-        db.collection("chat").document("salas_aux").collection("salas").get()
+        db.collection("chat").document("salas_aux").collection("salas").get()  //chat/salas_aux/salas
                 .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
                     @Override
                     public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
                         if (!queryDocumentSnapshots.isEmpty()) {
-                            for (DocumentSnapshot document : queryDocumentSnapshots.getDocuments()) {
-                                // Obtener datos de la sala
+                            for (DocumentSnapshot document : queryDocumentSnapshots.getDocuments()) { //queryDocumentSnapshots.getDocuments() lista de todos los documentos de la sala
+                                // Obtener datos de la sala                                           //DocumentSnapshot document variable de cada documento
                                 String idSala = document.getId();
                                 String nombreSala = document.getString("nombre");
                                 String participantesString = (String) document.get("usuarios");
@@ -142,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                                 // Verificar si el usuario actual está entre los participantes
                                 if (participantes != null && participantes.contains(obtenerNombreUsuario(usuario.getEmail()))) {
-                                    // Verificar si la sala ya se ha mostrado
+                                    // Verificar si la sala ya se ha mostrado, si se ha mostrado no se añade y por tanto no se muestra de nuevo
                                     boolean salaExistente = false;
                                     for (Sala sala : salasList) {
                                         if (sala.getId().equals(idSala)) {
@@ -177,8 +178,6 @@ public class MainActivity extends AppCompatActivity {
         if (usuario != null) {
             String nombreUsuario = obtenerNombreUsuario(usuario.getEmail());
             obtenerNombresUsuarios(nombresUsuarios -> {
-                Log.d("MainActivity", "Usuarios obtenidos: " + nombresUsuarios.size());
-
                 nombresUsuarios.remove(nombreUsuario);
 
                 // Inflar el diseño XML del diálogo flotante
@@ -213,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
                     // Obtener los usuarios seleccionados
                     List<String> usuariosSeleccionados = usuariosAdapter.getUsuariosSeleccionados();
 
-                    // Añadir tu nombre de usuario a la lista si aún no está presente
+                    // Añadir tu nombre de usuario a la lista
                     if (!usuariosSeleccionados.contains(nombreUsuario)) {
                         usuariosSeleccionados.add(nombreUsuario);
                     }
@@ -224,7 +223,7 @@ public class MainActivity extends AppCompatActivity {
                         usuariosString.append(usuario).append(",");
                     }
 
-                    // Generar un identificador único de 5 caracteres para la nueva sala
+                    // Generar un identificador único de 10 caracteres para la nueva sala
                     String idSala = Utils.generateUniqueID();
 
                     // Crear un mapa con los datos de la sala
@@ -278,9 +277,8 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void obtenerNombresUsuarios(OnUsuariosObtenidosListener listener) {
-        Log.d("Mio", "Obteniendo nombres de usuarios");
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("chat")
+        db.collection("chat")  //chat/usuarios, todos los campos y te los mete en una Lista
                 .document("usuarios")
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
@@ -324,6 +322,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void crearUsuarioDDBB(String nombreUsuario) {
+
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         DocumentReference usuarioDocRef = db.collection("chat").document("usuarios");
 
@@ -352,16 +351,6 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "Error al verificar el documento de usuarios: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
-
-    private void abrirMensajesActivity(String nombreSala, String idSala, List<String> participantes) {
-        Intent intent = new Intent(MainActivity.this, MensajesActivity.class);
-        intent.putExtra("nombreSala", nombreSala);
-        intent.putExtra("idSala", idSala);
-        intent.putStringArrayListExtra("participantesSala", new ArrayList<>(participantes));
-        startActivity(intent);
-    }
-
-
 
     interface OnUsuariosObtenidosListener {
         void onUsuariosObtenidos(List<String> nombresUsuarios);

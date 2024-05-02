@@ -7,16 +7,26 @@
     android:orientation="vertical"
     android:gravity="center"
     android:padding="25sp"
+    android:background="@color/blanco"
     tools:context=".RegisterActivity">
 
     <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20sp"
+        android:gravity="center"
         android:text="@string/register"
         android:textSize="25sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:layout_marginBottom="20sp"
+        android:textStyle="bold" />
+    <TextView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="1sp"
+        android:gravity="left"
+        android:text="@string/introduzca_su_email"
+        android:textSize="18sp"
+        android:textStyle="normal" />
+
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -28,12 +38,43 @@
         </com.google.android.material.textfield.TextInputEditText>
     </com.google.android.material.textfield.TextInputLayout>
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20sp"
+        android:gravity="left"
+        android:text="@string/introduzca_su_contrase_a"
+        android:textSize="18sp"
+        android:textStyle="normal" />
+
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/password"
             android:hint="@string/password"
+            android:inputType="textPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        </com.google.android.material.textfield.TextInputEditText>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20sp"
+        android:gravity="left"
+        android:text="@string/vuelva_a_introducir_su_contrase_a"
+        android:textSize="18sp"
+        android:textStyle="normal" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/password2"
+            android:hint="@string/password"
+            android:inputType="textPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
         </com.google.android.material.textfield.TextInputEditText>
@@ -45,12 +86,16 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 
+
     <Button
         android:id="@+id/btn_register"
-        android:layout_width="match_parent"
+        android:layout_width="156dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:layout_marginBottom="100dp"
+
         android:text="@string/registrarse"
-        android:layout_height="wrap_content">
-    </Button>
+        android:theme="@style/FirebaseUI.PrivacyFooter" />
 
 
     <TextView

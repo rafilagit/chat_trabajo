@@ -126,6 +126,8 @@ public class MensajesActivity extends AppCompatActivity {
         return lastItemPosition >= lastVisiblePosition && lastVisiblePosition > 0;
     }
 
+
+
     private void suscribirListenerMensajes(String nombreSala, String idSala, ArrayList<String> participantesSala) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -269,7 +271,7 @@ public class MensajesActivity extends AppCompatActivity {
                             .addOnSuccessListener(documentReference -> {
                                 Toast.makeText(MensajesActivity.this, "Mensaje enviado correctamente", Toast.LENGTH_SHORT).show();
                                 // Después de enviar el mensaje, actualizar la lista
-                                new Handler().postDelayed(() -> obtenerMensajes(nombreSala, idSala, participantesSala), 1500);
+                                obtenerMensajes(nombreSala, idSala, participantesSala);
                             })
                             .addOnFailureListener(e -> Toast.makeText(MensajesActivity.this, "Error al enviar el mensaje: " + e.getMessage(), Toast.LENGTH_SHORT).show());
                 }
@@ -289,11 +291,6 @@ public class MensajesActivity extends AppCompatActivity {
         return null;
     }
 
-
-
-    interface OnUsuariosObtenidosListener {
-        void onUsuariosObtenidos(List<String> nombresUsuarios);
-    }
 
     private String obtenerFechaHoraActual() {
         // Obtener la fecha y hora actual

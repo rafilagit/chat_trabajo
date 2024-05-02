@@ -35,7 +35,7 @@ public class SalasAdapter extends ArrayAdapter<Sala> {
 
         Sala sala = getItem(position);
 
-        TextView tvNombreSala = convertView.findViewById(R.id.btnSala);
+        TextView tvNombreSala = convertView.findViewById(R.id.btnSala); //No es un boton es un textview se quedo el id de boton
         TextView tvParticipantes = convertView.findViewById(R.id.tvParticipantes);
         TextView tvIdSala = convertView.findViewById(R.id.tvIdSala);
 
@@ -52,6 +52,8 @@ public class SalasAdapter extends ArrayAdapter<Sala> {
         tvParticipantes.setText("Participantes: " + participantesString);
         tvIdSala.setText("ID de la Sala: " + sala.getId());
 
+
+        //Gestiona los Clicks en los items de cada sala y le pasa los parametros a MensajesActivity
         convertView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
