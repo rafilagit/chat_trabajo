@@ -1,5 +1,7 @@
 package com.dam.chat_trabajo;
 
+import static java.security.AccessController.getContext;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -100,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
 
         Button botonCerrarSesion = findViewById(R.id.logout);
         Button botonCrearSala = findViewById(R.id.crearSala);
+        //Button botonEliminarSala = findViewById(R.id.boEliminarSala);
 
         botonCerrarSesion.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -119,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
                 mostrarDialogoCrearSala();
             }
         });
+
     }
 
     private void mostrarSalas() {
@@ -132,6 +136,7 @@ public class MainActivity extends AppCompatActivity {
                                 String idSala = document.getId();
                                 String nombreSala = document.getString("nombre");
                                 String participantesString = (String) document.get("usuarios");
+                                String admin = document.getString("admin");
                                 List<String> participantes = null;
                                 if (participantesString != null && !participantesString.isEmpty()) {
                                     // Eliminar la última coma si existe
@@ -153,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                     if (!salaExistente) {
                                         // Crear objeto Sala y añadirlo a la lista
-                                        Sala sala = new Sala(idSala, nombreSala, participantes);
+                                        Sala sala = new Sala(idSala, nombreSala, participantes, admin);
                                         salasList.add(sala);
                                     }
                                 }
@@ -174,65 +179,52 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void mostrarDialogoCrearSala() {
-        // Verificar si usuario no es null antes de usarlo
         if (usuario != null) {
             String nombreUsuario = obtenerNombreUsuario(usuario.getEmail());
             obtenerNombresUsuarios(nombresUsuarios -> {
                 nombresUsuarios.remove(nombreUsuario);
 
-                // Inflar el diseño XML del diálogo flotante
                 LayoutInflater inflater = LayoutInflater.from(this);
                 View dialogLayout = inflater.inflate(R.layout.dialog_crear_sala, null);
 
-                // EditText para el nombre de la sala (ya existe)
                 EditText editTextNombreSala = dialogLayout.findViewById(R.id.editTextNombreSala);
-
-                // RecyclerView para mostrar la lista de usuarios con casillas de verificación
                 RecyclerView recyclerViewUsuarios = dialogLayout.findViewById(R.id.recyclerViewUsuarios);
                 recyclerViewUsuarios.setLayoutManager(new LinearLayoutManager(this));
 
-                // Adaptador para la lista de usuarios
                 UsuariosAdapter usuariosAdapter = new UsuariosAdapter(nombresUsuarios);
                 recyclerViewUsuarios.setAdapter(usuariosAdapter);
 
-                // Construir el diálogo flotante (ya existe)
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setView(dialogLayout);
                 builder.setTitle("Crear Sala");
                 builder.setPositiveButton("Crear", (dialog, which) -> {
-                    // Obtener el nombre de la sala
                     String nombreSala = editTextNombreSala.getText().toString().trim();
 
-                    // Validar que se ingresó un nombre de sala
                     if (nombreSala.isEmpty()) {
                         Toast.makeText(MainActivity.this, "Por favor, ingresa un nombre para la sala", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
-                    // Obtener los usuarios seleccionados
                     List<String> usuariosSeleccionados = usuariosAdapter.getUsuariosSeleccionados();
 
-                    // Añadir tu nombre de usuario a la lista
                     if (!usuariosSeleccionados.contains(nombreUsuario)) {
                         usuariosSeleccionados.add(nombreUsuario);
                     }
 
-                    // Construir el string con los usuarios seleccionados separados por comas
                     StringBuilder usuariosString = new StringBuilder();
                     for (String usuario : usuariosSeleccionados) {
                         usuariosString.append(usuario).append(",");
                     }
 
-                    // Generar un identificador único de 10 caracteres para la nueva sala
                     String idSala = Utils.generateUniqueID();
 
-                    // Crear un mapa con los datos de la sala
                     Map<String, Object> sala = new HashMap<>();
                     sala.put("nombre", nombreSala);
                     sala.put("usuarios", usuariosString.toString());
-                    sala.put("salaId", idSala); // Agregar el ID de la sala al mapa
+                    sala.put("salaId", idSala);
+                    sala.put("admin", nombreUsuario); // Asignar el nombre del usuario como admin
 
-                    // Añadir la sala al Firestore con el identificador único como nombre de la colección
+                    // Guardar la sala en Firestore
                     db.collection("chat")
                             .document("salas_aux")
                             .collection("salas")
@@ -241,19 +233,19 @@ public class MainActivity extends AppCompatActivity {
                             .addOnSuccessListener(aVoid -> {
                                 Toast.makeText(MainActivity.this, "Sala creada correctamente", Toast.LENGTH_SHORT).show();
 
-                                // Crear colecciones dentro de la sala para cada participante
-                                for (String participante : usuariosSeleccionados) {
+                                // Verificar si el usuario actual es el admin de la sala creada
+                                if (usuariosSeleccionados.contains(nombreUsuario)) {
+                                    // Actualizar el campo 'admin' en Firestore con el nombre del usuario
                                     db.collection("chat")
-                                            .document("salas")
-                                            .collection(idSala)
-                                            .document(nombreSala)
-                                            .collection(participante)
-                                            .add(new HashMap<>())
+                                            .document("salas_aux")
+                                            .collection("salas")
+                                            .document(idSala)
+                                            .update("admin", nombreUsuario)
                                             .addOnSuccessListener(aVoid1 -> {
-                                                Log.d("MainActivity", "Colección creada para participante: " + participante);
+                                                Log.d("MainActivity", "Campo 'admin' actualizado en Firestore.");
                                             })
                                             .addOnFailureListener(e -> {
-                                                Log.e("MainActivity", "Error al crear la colección para participante: " + participante, e);
+                                                Log.e("MainActivity", "Error al actualizar el campo 'admin': " + e.getMessage());
                                             });
                                 }
                             })
@@ -262,11 +254,9 @@ public class MainActivity extends AppCompatActivity {
                             });
                 });
                 builder.setNegativeButton("Cancelar", (dialog, which) -> {
-                    // Cerrar el diálogo si se presiona el botón "Cancelar"
                     dialog.cancel();
                 });
 
-                // Mostrar el diálogo flotante (ya existe)
                 AlertDialog dialog = builder.create();
                 dialog.show();
             });
@@ -274,6 +264,7 @@ public class MainActivity extends AppCompatActivity {
             Log.e("MainActivity", "El objeto usuario es null");
         }
     }
+
 
 
     private void obtenerNombresUsuarios(OnUsuariosObtenidosListener listener) {
@@ -335,7 +326,7 @@ public class MainActivity extends AppCompatActivity {
                                 .update(nombreUsuario, true)
                                 .addOnSuccessListener(aVoid -> {
                                     // Campo de usuario actualizado exitosamente
-                                    Toast.makeText(MainActivity.this, "Es tu primera vez en el chat? "+nombreUsuario, Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(MainActivity.this, "¡Es tu primera vez en el chat! Bienvenido "+nombreUsuario, Toast.LENGTH_SHORT).show();
                                 })
                                 .addOnFailureListener(e -> {
                                     // Error al actualizar el campo de usuario

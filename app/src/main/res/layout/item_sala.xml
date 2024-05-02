@@ -1,11 +1,13 @@
 <!-- item_sala.xml -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="16dp"
     android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    tools:ignore="ExtraText">
 
     <TextView
         android:id="@+id/btnSala"
@@ -29,4 +31,12 @@
         android:text="ID de la Sala: 123456"
         android:textSize="14sp"/>
 
+    <Button
+        android:id="@+id/btnEliminarSala"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Eliminar"
+        android:visibility="visible"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#FF0000" />
 </LinearLayout>
