@@ -894,9 +894,16 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                                         .setPositiveButton("Enviar", new DialogInterface.OnClickListener() {
                                             @Override
                                             public void onClick(DialogInterface dialog, int which) {
-                                                // Aquí puedes hacer lo que necesites con la dirección, como enviarla a través de un intent
-                                                // Por ejemplo, aquí puedes enviar la ubicación con latLng
-                                                //enviarUbicacion(latLng);
+                                                // Convertir la latitud y longitud a cadenas
+                                                String latitudString = String.valueOf(latitud);
+                                                String longitudString = String.valueOf(longitud);
+
+                                                // Concatenar las cadenas en el formato deseado
+                                                String ubicacionString = "Latitud: " + latitudString + ", Longitud: " + longitudString;
+
+                                                // Aquí puedes hacer lo que necesites con la ubicación como una cadena de texto
+                                                // Por ejemplo, puedes enviarla a través de un intent
+                                                // enviarUbicacion(ubicacionString);
                                             }
                                         })
                                         .setNegativeButton("Cancelar", null)
@@ -948,6 +955,11 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                 googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
                     @Override
                     public void onInfoWindowClick(Marker marker) {
+                        // Obtener la posición del marcador seleccionado
+                        LatLng latLng = marker.getPosition();
+                        double latitud = latLng.latitude;
+                        double longitud = latLng.longitude;
+
                         // Obtener la dirección de la ubicación seleccionada
                         String direccion = marker.getSnippet();
 
@@ -958,19 +970,22 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                                 .setPositiveButton("Enviar", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        // Aquí puedes hacer lo que necesites con la dirección, como enviarla a través de un intent
+                                        // Convertir la latitud y longitud a cadenas
+                                        String latitudString = String.valueOf(latitud);
+                                        String longitudString = String.valueOf(longitud);
+
+                                        // Concatenar las cadenas en el formato deseado
+                                        String ubicacionString = "Latitud: " + latitudString + ", Longitud: " + longitudString;
+
+                                        // Aquí puedes hacer lo que necesites con la ubicación como una cadena de texto
+                                        // Por ejemplo, puedes enviarla a través de un intent
+                                        // enviarUbicacion(ubicacionString);
                                     }
                                 })
                                 .setNegativeButton("Cancelar", null)
                                 .show();
                     }
                 });
-
-
-
-
-
-
 
             }
         });
