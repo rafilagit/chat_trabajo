@@ -28,6 +28,14 @@
         android:adjustViewBounds="true"
         android:visibility="gone" />
 
+    <Button
+        android:id="@+id/btnReproducirAudio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Reproducir"
+        android:visibility="gone" />
+
+
     <TextView
         android:id="@+id/textViewMensaje"
         android:layout_width="wrap_content"

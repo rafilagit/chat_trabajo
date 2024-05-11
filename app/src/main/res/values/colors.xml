@@ -3,4 +3,6 @@
     <color name="negro">#FF000000</color>
     <color name="blanco">#FFFFFFFF</color>
     <color name="celeste">#D0F4F5</color>
+    <color name="gris">#EEEEEE</color>
+
 </resources>

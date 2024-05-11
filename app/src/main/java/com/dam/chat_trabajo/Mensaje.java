@@ -11,13 +11,15 @@ public class Mensaje {
     private String contenidoMensaje;
     private String fechaHora; // Cambiado a String
     private String imagen; // Nuevo campo para la URL de la imagen adjunta
+    private String audio;
 
 
-    public Mensaje(String nombreUsuario, String contenidoMensaje, String fechaHora, String imagen) { // Ajustado el constructor
+    public Mensaje(String nombreUsuario, String contenidoMensaje, String fechaHora, String imagen, String audio) { // Ajustado el constructor
         this.nombreUsuario = nombreUsuario;
         this.contenidoMensaje = contenidoMensaje;
         this.imagen = imagen;
         this.fechaHora = fechaHora;
+        this.audio= audio;
     }
 
     public String getNombreUsuario() {
@@ -67,18 +69,17 @@ public class Mensaje {
     public String getImagen() {
         return imagen;
     }
+    public String getAudio() {
+        return audio;
+    }
 
     public Map<String, Object> toMap() {
         Map<String, Object> map = new HashMap<>();
         map.put("nombreUsuario", nombreUsuario);
-        map.put("contenidoMensaje", contenidoMensaje);
         map.put("fechaHoraOriginal", fechaHora); // Actualizado para incluir la fecha y hora original
-        if (contenidoMensaje != null) {
-            map.put("contenidoMensaje", contenidoMensaje);
-        }
-        if (imagen != null) {
-            map.put("imagen", imagen);
-        }
+        map.put("contenidoMensaje", contenidoMensaje);
+        map.put("imagen", imagen);
+        map.put("audio", audio);
         return map;
     }
 }

@@ -1,0 +1,32 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/fondo_menu_flotante">
+
+    <ImageButton
+        android:id="@+id/botonAdjuntarImagen"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="45dp"
+        android:layout_marginStart="35dp"
+        android:background="@null"
+        android:contentDescription="Adjuntar imagen"
+        android:scaleType="centerInside"
+        android:src="@drawable/camara" />
+
+    <ImageButton
+        android:id="@+id/botonMapa"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="-48dp"
+        android:layout_marginStart="115dp"
+        android:background="@null"
+        android:contentDescription="Maps"
+        android:scaleType="centerInside"
+        android:src="@drawable/maps" />
+
+
+    <!-- Agrega más botones según sea necesario -->
+
+</LinearLayout>

@@ -24,6 +24,15 @@
         android:background="@android:color/white"
         android:elevation="8dp">
 
+        <ImageButton
+            android:id="@+id/buttonAudio"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:layout_marginTop="5dp"
+            android:background="@null"
+            android:contentDescription="Boton Enviar"
+            android:scaleType="centerInside"
+            android:src="@drawable/audio" />
     <EditText
         android:id="@+id/editTextMensaje"
         android:layout_width="0dp"
@@ -36,20 +45,25 @@
         android:padding="8dp" />
 
     <ImageButton
-        android:id="@+id/botonAdjuntarImagen"
+        android:id="@+id/clip"
+        android:layout_width="68dp"
+        android:layout_height="58dp"
+        android:background="@null"
+        android:contentDescription="Menu Flotante"
+        android:scaleType="centerInside"
+        android:onClick="mostrarMenuFlotante"
+        android:src="@drawable/clip" />
+
+    <ImageButton
+        android:id="@+id/buttonEnviar"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:background="@null"
-        android:contentDescription="Adjuntar imagen"
+        android:contentDescription="Boton Enviar"
         android:scaleType="centerInside"
-        android:src="@drawable/camara" />
+        android:src="@drawable/enviar" />
 
-    <Button
-        android:id="@+id/buttonEnviar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Enviar" />
-</LinearLayout>
+    </LinearLayout>
 
 <ImageButton
 android:id="@+id/botonScrollAbajo"
