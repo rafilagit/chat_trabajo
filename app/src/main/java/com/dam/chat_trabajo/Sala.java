@@ -8,11 +8,14 @@ public class Sala {
     private List<String> participantes;
     private String admin;
 
-    public Sala(String id, String nombre, List<String> participantes, String admin) {
+    private int imagen;
+
+    public Sala(String id, String nombre, List<String> participantes, String admin, int imagen) {
         this.id = id;
         this.nombre = nombre;
         this.participantes = participantes;
         this.admin = admin;
+        this.imagen = imagen;
     }
 
     public String getId() {
@@ -38,6 +41,7 @@ public class Sala {
     public void setParticipantes(List<String> participantes) {
         this.participantes = participantes;
     }
+
     public String getAdmin() {
         return admin;
     }
@@ -45,4 +49,14 @@ public class Sala {
     public void setAdmin(String admin) {
         this.admin = admin;
     }
+
+    public void setImagen(int imagen) {
+        this.imagen = imagen;
+    }
+
+    public int getImagen() {
+        return imagen;
+    }
 }
+
+

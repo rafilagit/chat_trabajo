@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -15,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -32,6 +34,8 @@ import android.widget.AbsListView;
 public class MensajesActivity extends AppCompatActivity {
 
     private ListView listView;
+
+    private ImageView imageViewFondoSala;
     private MensajeAdapter adapter;
     private EditText editTextMensaje;
     private Button buttonEnviar;
@@ -50,74 +54,83 @@ public class MensajesActivity extends AppCompatActivity {
 
         // Recuperar los parámetros del Intent
         Intent intent = getIntent();
-        if (intent != null) {
-             nombreSala = intent.getStringExtra("nombreSala");
-             idSala = intent.getStringExtra("idSala");
-             participantesSala = intent.getStringArrayListExtra("participantesSala");
+        // Obtener el ID de la imagen de fondo del intent
+        int imagenId = intent.getIntExtra("imagen", 0);
+        imageViewFondoSala = findViewById(R.id.imageViewFondoSala);
 
-            // Ahora puedes usar estos datos como desees
-            Log.d("MensajesActivity", "Nombre de la sala: " + nombreSala);
-            Log.d("MensajesActivity", "ID de la sala: " + idSala);
-            Log.d("MensajesActivity", "Participantes de la sala: " + participantesSala);
+
+// Verificar si se proporcionó un ID válido de imagen de fondo
+        if (imagenId != 0) {
+            // Establecer la imagen de fondo en el ImageView
+            imageViewFondoSala.setImageResource(imagenId);
+        } else {
+            // Manejar caso donde no se proporcionó un ID válido de imagen de fondo
+            imageViewFondoSala.setImageResource(R.drawable.fondo_default);
+        }
+        nombreSala = intent.getStringExtra("nombreSala");
+            idSala = intent.getStringExtra("idSala");
+            participantesSala = intent.getStringArrayListExtra("participantesSala");
+
+            // Obtener la imagen de fondo de la sala y mostrarla en el ImageView
+        obtenerImagenDeFondoParaSala(idSala, new ImagenFondoCallback() {
+            @Override
+            public void onImagenFondoObtenida(int imagenId) {
+                // Este método se ejecutará cuando se haya obtenido el ID de la imagen de fondo
+                imageViewFondoSala.setImageResource(imagenId);
+            }
+        });
+            //int idImagenFondo = getResources().getIdentifier(nombreImagenFondo, "drawable", getPackageName());
+            //ImageView imageViewFondoSala = findViewById(R.id.imageViewFondoSala);
+            //imageViewFondoSala.setImageResource(idImagenFondo);
+
+            // Resto del código de inicialización
+            listView = findViewById(R.id.listView);
+            editTextMensaje = findViewById(R.id.editTextMensaje);
+            buttonEnviar = findViewById(R.id.buttonEnviar);
+            botonScrollAbajo = findViewById(R.id.botonScrollAbajo);
+            auth = FirebaseAuth.getInstance();
+            usuario = auth.getCurrentUser();
+
+            List<Mensaje> mensajes = new ArrayList<>();
+            String nombreUsuario = obtenerNombreUsuario(usuario.getEmail());
+            adapter = new MensajeAdapter(this, R.layout.item_mensaje, mensajes, nombreUsuario);
+            listView.setAdapter(adapter);
+
+            buttonEnviar.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    enviarMensaje(nombreSala, idSala, participantesSala);
+                }
+            });
+
+            suscribirListenerMensajes(nombreSala, idSala, participantesSala);
+
+            botonScrollAbajo.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    listView.smoothScrollToPosition(adapter.getCount() - 1);
+                }
+            });
+
+            botonScrollAbajo.setVisibility(View.GONE);
+
+            listView.setOnScrollListener(new AbsListView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(AbsListView view, int scrollState) {
+                    // No es necesario implementar este método
+                }
+
+                @Override
+                public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                    if (listView.getChildAt(0) != null) {
+                        boolean canScrollDown = listView.getLastVisiblePosition() != listView.getAdapter().getCount() - 1 ||
+                                listView.getChildAt(listView.getChildCount() - 1).getBottom() > listView.getHeight();
+                        botonScrollAbajo.setVisibility(canScrollDown ? View.VISIBLE : View.GONE);
+                    }
+                }
+            });
         }
 
-
-
-        listView = findViewById(R.id.listView);
-        editTextMensaje = findViewById(R.id.editTextMensaje);
-        buttonEnviar = findViewById(R.id.buttonEnviar);
-        botonScrollAbajo = findViewById(R.id.botonScrollAbajo); // Obtener referencia al botón de scroll hacia abajo
-        auth = FirebaseAuth.getInstance();
-        usuario = auth.getCurrentUser();
-
-        List<Mensaje> mensajes = new ArrayList<>();
-        String nombreUsuario = obtenerNombreUsuario(usuario.getEmail());
-        adapter = new MensajeAdapter(this, R.layout.item_mensaje, mensajes, nombreUsuario);
-        listView.setAdapter(adapter);
-
-        buttonEnviar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                enviarMensaje(nombreSala, idSala, participantesSala);
-            }
-        });
-
-        // Suscribir al listener en tiempo real para obtener mensajes
-        suscribirListenerMensajes(nombreSala, idSala, participantesSala);
-
-        // Agregar un Listener al botón de scroll hacia abajo
-        botonScrollAbajo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Desplazar la lista hasta la parte inferior
-                listView.smoothScrollToPosition(adapter.getCount() - 1);
-            }
-        });
-
-        // Ocultar el botón de scroll hacia abajo al inicio
-        botonScrollAbajo.setVisibility(View.GONE);
-
-        // Agregar un listener de desplazamiento al ListView
-        listView.setOnScrollListener(new AbsListView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(AbsListView view, int scrollState) {
-                // No es necesario implementar este método, pero es obligatorio
-            }
-
-            @Override
-            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if (listView.getChildAt(0) != null) {
-                    // Verificar si el primer elemento visible es el primero en la lista
-                    boolean canScrollDown = listView.getLastVisiblePosition() != listView.getAdapter().getCount() - 1 || listView.getChildAt(listView.getChildCount() - 1).getBottom() > listView.getHeight();
-
-                    // Si se puede hacer scroll hacia abajo, mostrar el botón, de lo contrario, ocultarlo
-                    botonScrollAbajo.setVisibility(canScrollDown ? View.VISIBLE : View.GONE);
-                }
-            }
-        });
-
-
-    }
 
     // Método para verificar si es posible hacer scroll hacia abajo
     private boolean canScrollDown(ListView listView) {
@@ -125,6 +138,46 @@ public class MensajesActivity extends AppCompatActivity {
         final int lastVisiblePosition = listView.getChildCount() - 1;
         return lastItemPosition >= lastVisiblePosition && lastVisiblePosition > 0;
     }
+    private void obtenerImagenDeFondoParaSala(String idSala, ImagenFondoCallback callback) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Construye la referencia al documento dentro de la estructura de colecciones
+        DocumentReference salaRef = db.collection("chat")
+                .document("salas_aux")
+                .collection("salas")
+                .document(idSala);
+
+        salaRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    // Obtén el ID de la imagen de fondo del documento
+                    Long imagenId = document.getLong("imagen");
+                    if (imagenId != null) {
+                        int idDrawable = imagenId.intValue();
+                        callback.onImagenFondoObtenida(idDrawable);
+                    } else {
+                        Log.d("obtenerImagenDeFondo", "ID de imagen es nulo para la sala con ID: " + idSala);
+                        callback.onImagenFondoObtenida(R.drawable.fondo_atardecer); // Usar imagen por defecto si no se encuentra el ID
+                    }
+                } else {
+                    Log.d("obtenerImagenDeFondo", "No se encontró documento para la sala con ID: " + idSala);
+                    callback.onImagenFondoObtenida(R.drawable.fondo_arboles); // Usar imagen por defecto si el documento no existe
+                }
+            } else {
+                Log.d("obtenerImagenDeFondo", "Error al obtener documento de la sala con ID: " + idSala, task.getException());
+                callback.onImagenFondoObtenida(R.drawable.fondo_default); // Usar imagen por defecto en caso de error
+            }
+        });
+    }
+
+
+
+    // Interfaz de callback para manejar el resultado de la obtención de la imagen de fondo
+    interface ImagenFondoCallback {
+        void onImagenFondoObtenida(int imagenId);
+    }
+
 
 
 

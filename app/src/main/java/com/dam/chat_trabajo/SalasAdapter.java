@@ -88,8 +88,11 @@ public class SalasAdapter extends ArrayAdapter<Sala> {
                 intent.putExtra("nombreSala", sala.getNombre());
                 intent.putExtra("idSala", sala.getId());
                 intent.putStringArrayListExtra("participantesSala", new ArrayList<>(sala.getParticipantes()));
+                intent.putExtra("admin", sala.getAdmin()); // Agregar el administrador como extra
+                intent.putExtra("imagen", sala.getImagen()); // Agregar la imagen como extra
                 getContext().startActivity(intent);
             }
+
         });
 
         return convertView;
