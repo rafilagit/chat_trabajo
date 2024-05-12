@@ -13,6 +13,13 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.squareup.picasso.Picasso;
 import android.graphics.drawable.Drawable; // Agrega esta importación
 import android.widget.Toast;
@@ -48,12 +55,24 @@ public class MensajeAdapter extends ArrayAdapter<Mensaje> {
     public interface OnImageMessageLongClickListener {
         void onImageMessageLongClick(String imageUrl);
     }
-
     private OnImageMessageLongClickListener mOnImageMessageLongClickListener;
 
     public void setOnImageMessageLongClickListener(OnImageMessageLongClickListener listener) {
         mOnImageMessageLongClickListener = listener;
     }
+
+
+
+    // Interfaz para notificar al MensajesActivity cuando se hace clic en un mensaje de ubicación
+    public interface OnLocationClickListener {
+        void onLocationClick(String ubicacion);
+    }
+    private OnLocationClickListener mOnLocationClickListener;
+
+    public void setOnLocationClickListener(OnLocationClickListener listener) {
+        mOnLocationClickListener = listener;
+    }
+
 
 
 
@@ -81,6 +100,8 @@ public class MensajeAdapter extends ArrayAdapter<Mensaje> {
         TextView textViewMensaje = convertView.findViewById(R.id.textViewMensaje);
         TextView textViewFechaHora = convertView.findViewById(R.id.textViewFechaHora);
         Button btnReproducirAudio = convertView.findViewById(R.id.btnReproducirAudio);
+        MapView mapView = convertView.findViewById(R.id.mapView);
+
 
         ImageView imageViewImagen = convertView.findViewById(R.id.imageViewImagen); // Referencia al ImageView para la imagen
 
@@ -110,6 +131,8 @@ public class MensajeAdapter extends ArrayAdapter<Mensaje> {
         if (mensaje.getImagen() != null) {
             // Si es una imagen, ocultar el TextView del mensaje y cargar la imagen en el ImageView
             textViewMensaje.setVisibility(View.GONE);
+            mapView.setVisibility(View.GONE);
+            btnReproducirAudio.setVisibility(View.GONE);
             imageViewImagen.setVisibility(View.VISIBLE);
 
 
@@ -161,19 +184,61 @@ public class MensajeAdapter extends ArrayAdapter<Mensaje> {
             });
 
 
-
-
         } else if(mensaje.getContenidoMensaje() != null) {
             // Si es un mensaje de texto, mostrar el TextView del mensaje y ocultar el ImageView
-            textViewMensaje.setVisibility(View.VISIBLE);
+            mapView.setVisibility(View.GONE);
             imageViewImagen.setVisibility(View.GONE);
+            btnReproducirAudio.setVisibility(View.GONE);
+            textViewMensaje.setVisibility(View.VISIBLE);
+
             textViewMensaje.setText(mensaje.getContenidoMensaje());
         }
+
+        //SI ME HA LLEGADO UNA UBICACION
+        else if (mensaje.getUbicacion() != null) {
+            // Ocultar el TextView del mensaje y mostrar el MapView
+            textViewMensaje.setVisibility(View.GONE);
+            imageViewImagen.setVisibility(View.GONE);
+            btnReproducirAudio.setVisibility(View.GONE);
+            mapView.setVisibility(View.VISIBLE);
+
+            // Inicializar el MapView
+            mapView.onCreate(null); // No pasamos un Bundle de estado guardado
+            mapView.onResume(); // Necesario para que el mapa sea visible
+
+            // Configurar el mapa
+            mapView.getMapAsync(new OnMapReadyCallback() {
+                @Override
+                public void onMapReady(GoogleMap googleMap) {
+                    // Extraer la latitud y longitud de la ubicación del mensaje
+                    String ubicacionString = mensaje.getUbicacion();
+                    String[] ubicacionParts = ubicacionString.split(",");
+                    double latitud = Double.parseDouble(ubicacionParts[0].substring(9).trim());
+                    double longitud = Double.parseDouble(ubicacionParts[1].substring(10).trim());
+
+                    // Agregar un marcador en la ubicación
+                    LatLng ubicacion = new LatLng(latitud, longitud);
+                    googleMap.addMarker(new MarkerOptions().position(ubicacion));
+                    googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(ubicacion, 17)); // Zoom en la ubicación
+                }
+            });
+
+            convertView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (mensaje.getUbicacion() != null && mOnLocationClickListener != null) {
+                        mOnLocationClickListener.onLocationClick(mensaje.getUbicacion());
+                    }
+                }
+            });
+        }
+
 
         else {
             // Si es un mensaje de audio, ocultar el TextView del mensaje y cargar el botón de reproducción del audio
             textViewMensaje.setVisibility(View.GONE);
             imageViewImagen.setVisibility(View.GONE); // Ocultar el ImageView
+            mapView.setVisibility(View.GONE);
 
             // Mostrar el botón de reproducción de audio en su lugar
             btnReproducirAudio.setVisibility(View.VISIBLE);

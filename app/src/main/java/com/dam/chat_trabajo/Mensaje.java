@@ -12,14 +12,16 @@ public class Mensaje {
     private String fechaHora; // Cambiado a String
     private String imagen; // Nuevo campo para la URL de la imagen adjunta
     private String audio;
+    private String ubicacion;
 
 
-    public Mensaje(String nombreUsuario, String contenidoMensaje, String fechaHora, String imagen, String audio) { // Ajustado el constructor
+    public Mensaje(String nombreUsuario, String contenidoMensaje, String fechaHora, String imagen, String audio, String ubicacion) { // Ajustado el constructor
         this.nombreUsuario = nombreUsuario;
         this.contenidoMensaje = contenidoMensaje;
         this.imagen = imagen;
         this.fechaHora = fechaHora;
         this.audio= audio;
+        this.ubicacion= ubicacion;
     }
 
     public String getNombreUsuario() {
@@ -72,6 +74,10 @@ public class Mensaje {
     public String getAudio() {
         return audio;
     }
+    public String getUbicacion() {
+        return ubicacion;
+    }
+
 
     public Map<String, Object> toMap() {
         Map<String, Object> map = new HashMap<>();
@@ -80,6 +86,7 @@ public class Mensaje {
         map.put("contenidoMensaje", contenidoMensaje);
         map.put("imagen", imagen);
         map.put("audio", audio);
+        map.put("ubicacion", ubicacion);
         return map;
     }
 }

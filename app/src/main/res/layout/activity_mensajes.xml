@@ -74,4 +74,5 @@ android:background="@drawable/flecha_abajo"
 android:layout_above="@id/layoutMensaje"
 android:layout_alignParentEnd="true" />
 
-    </RelativeLayout>
+
+</RelativeLayout>

@@ -92,7 +92,7 @@ import java.util.Locale;
 import android.os.Handler;
 import android.widget.AbsListView;
 
-public class MensajesActivity extends AppCompatActivity implements MensajeAdapter.OnImageMessageLongClickListener {
+public class MensajesActivity extends AppCompatActivity implements MensajeAdapter.OnImageMessageLongClickListener, MensajeAdapter.OnLocationClickListener {
 
     private ListView listView;
     private MensajeAdapter adapter;
@@ -119,11 +119,8 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
     private File audio;
 
     private Vibrator vibrator;
-    private String Ruta;
 
-
-
-
+    private String lastSelectedLocation; // Variable para almacenar la última ubicación seleccionada
 
 
 
@@ -135,16 +132,15 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
         // Recuperar los parámetros del Intent
         Intent intent = getIntent();
         if (intent != null) {
-             nombreSala = intent.getStringExtra("nombreSala");
-             idSala = intent.getStringExtra("idSala");
-             participantesSala = intent.getStringArrayListExtra("participantesSala");
+            nombreSala = intent.getStringExtra("nombreSala");
+            idSala = intent.getStringExtra("idSala");
+            participantesSala = intent.getStringArrayListExtra("participantesSala");
 
             // Ahora puedes usar estos datos como desees
             Log.d("MensajesActivity", "Nombre de la sala: " + nombreSala);
             Log.d("MensajesActivity", "ID de la sala: " + idSala);
             Log.d("MensajesActivity", "Participantes de la sala: " + participantesSala);
         }
-
 
 
         listView = findViewById(R.id.listView);
@@ -165,7 +161,7 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
         buttonEnviar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                enviarMensaje(nombreSala, idSala, participantesSala, null, null);
+                enviarMensaje(nombreSala, idSala, participantesSala, null, null, null);
             }
         });
 
@@ -232,9 +228,87 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
 
 
         adapter.setOnImageMessageLongClickListener(this);
+        adapter.setOnLocationClickListener(this);
 
 
     }
+
+
+
+    // Método para manejar el clic en un mensaje de ubicación
+    @Override
+    public void onLocationClick(String ubicacion) {
+        lastSelectedLocation = ubicacion; // Guardar la ubicación seleccionada
+        // Crear un diálogo personalizado para mostrar el mapa y la ubicación
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_vermaparecbido, null);
+        builder.setView(dialogView);
+        AlertDialog dialog = builder.create();
+
+        // Configurar el mapa en el diálogo
+        MapView mapView = dialogView.findViewById(R.id.mapViewDialog);
+        mapView.onCreate(dialog.onSaveInstanceState());
+        mapView.onResume();
+        mapView.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(GoogleMap googleMap) {
+                // Extraer la latitud y longitud de la ubicación del mensaje
+                String[] ubicacionParts = ubicacion.split(",");
+                double latitud = Double.parseDouble(ubicacionParts[0].substring(9).trim());
+                double longitud = Double.parseDouble(ubicacionParts[1].substring(10).trim());
+
+                // Agregar un marcador en la ubicación
+                LatLng ubicacionLatLng = new LatLng(latitud, longitud);
+                googleMap.addMarker(new MarkerOptions().position(ubicacionLatLng));
+                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(ubicacionLatLng, 17)); // Zoom en la ubicación
+            }
+        });
+
+        // Configurar el botón "Cerrar" en el diálogo
+        ImageButton btnCerrar = dialogView.findViewById(R.id.botonCerrar);
+
+        btnCerrar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss(); // Cerrar el diálogo cuando se hace clic en el botón "Cerrar"
+            }
+        });
+
+        dialog.show(); // Mostrar el diálogo
+    }
+
+    // Método para abrir Google Maps con la ubicación seleccionada
+    public void openGoogleMaps(View view) {
+        if (lastSelectedLocation != null) { // Verificar si hay una ubicación seleccionada
+            // Obtener la latitud y longitud de la ubicación seleccionada
+            String[] ubicacionParts = lastSelectedLocation.split(",");
+            double latitud = Double.parseDouble(ubicacionParts[0].substring(9).trim());
+            double longitud = Double.parseDouble(ubicacionParts[1].substring(10).trim());
+
+            // Crear una URI con la latitud y longitud
+            Uri gmmIntentUri = Uri.parse("google.navigation:q=" + latitud + "," + longitud);
+
+            // Crear un intent para abrir Google Maps con la ubicación especificada
+            Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+            mapIntent.setPackage("com.google.android.apps.maps");
+
+            // Verificar si la aplicación de Google Maps está instalada
+            if (mapIntent.resolveActivity(getPackageManager()) != null) {
+                // Abrir Google Maps
+                startActivity(mapIntent);
+            } else {
+                // Mostrar un mensaje de error si Google Maps no está instalado
+                Toast.makeText(this, "Google Maps no está instalado en este dispositivo", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            // Mostrar un mensaje si no se ha seleccionado ninguna ubicación
+            Toast.makeText(this, "Selecciona una ubicación primero", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+
 
     // Método para verificar si es posible hacer scroll hacia abajo
     private boolean canScrollDown(ListView listView) {
@@ -291,9 +365,10 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                                     String fechaHora = mensajeDoc.getString("fechaHoraOriginal");
                                     String downloadUrl = mensajeDoc.getString("imagen");
                                     String downloadUrlAudio = mensajeDoc.getString("audio");
+                                    String ubicacion = mensajeDoc.getString("ubicacion");
 
                                     if (fechaHora != null) {
-                                        Mensaje mensaje = new Mensaje(nombreUsuario, mensajeTexto, fechaHora, downloadUrl, downloadUrlAudio);
+                                        Mensaje mensaje = new Mensaje(nombreUsuario, mensajeTexto, fechaHora, downloadUrl, downloadUrlAudio, ubicacion);
                                         todosMensajes.add(mensaje);
                                     }
                                 }
@@ -313,8 +388,9 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                                                         String fechaHora = mensajeDoc.getString("fechaHoraOriginal");
                                                         String downloadUrl = mensajeDoc.getString("imagen");
                                                         String downloadUrlAudio = mensajeDoc.getString("audio");
+                                                        String ubicacion = mensajeDoc.getString("ubicacion");
                                                         if (fechaHora != null) {
-                                                            Mensaje mensaje = new Mensaje(nombre, mensajeTexto, fechaHora, downloadUrl, downloadUrlAudio);
+                                                            Mensaje mensaje = new Mensaje(nombre, mensajeTexto, fechaHora, downloadUrl, downloadUrlAudio, ubicacion);
                                                             todosMensajes.add(mensaje);
                                                         }
                                                     }
@@ -385,9 +461,9 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
     }
 
 
-    private void enviarMensaje(String nombreSala, String idSala, ArrayList<String> participantesSala, String downloadURL, String downloadUrlAudio) {
+    private void enviarMensaje(String nombreSala, String idSala, ArrayList<String> participantesSala, String downloadURL, String downloadUrlAudio, String ubicacion) {
 
-        if (downloadURL == null && downloadUrlAudio==null) {   //Si no hay una imagen ni hay un audio
+        if (downloadURL == null && downloadUrlAudio==null && ubicacion ==null) {   //Si no hay una imagen ni hay un audio
             String mensaje = editTextMensaje.getText().toString().trim();
             if (!mensaje.isEmpty()) {
                 FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -399,7 +475,7 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                         String fechaHora = obtenerFechaHoraActual();
 
                         // Guardar el mensaje junto con la fecha y hora en Firestore
-                        Mensaje nuevoMensaje = new Mensaje(nombreUsuario, mensaje, fechaHora, null, null);
+                        Mensaje nuevoMensaje = new Mensaje(nombreUsuario, mensaje, fechaHora, null, null, null);
                         db.collection("chat")
                                 .document("salas")
                                 .collection(idSala)
@@ -421,7 +497,7 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
             }
         }
         //Si envio una imagen
-        else if(downloadUrlAudio==null){
+        else if(downloadUrlAudio==null && ubicacion == null){
             if (!downloadURL.isEmpty()) {
                 FirebaseFirestore db = FirebaseFirestore.getInstance();
                 FirebaseUser usuario = FirebaseAuth.getInstance().getCurrentUser();
@@ -432,7 +508,7 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                         String fechaHora = obtenerFechaHoraActual();
 
                         // Guardar el mensaje junto con la fecha y hora en Firestore
-                        Mensaje nuevoMensaje = new Mensaje(nombreUsuario, null, fechaHora, downloadURL, null);
+                        Mensaje nuevoMensaje = new Mensaje(nombreUsuario, null, fechaHora, downloadURL, null, null);
                         db.collection("chat")
                                 .document("salas")
                                 .collection(idSala)
@@ -451,8 +527,8 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                 Toast.makeText(this, "Por favor, escribe un mensaje", Toast.LENGTH_SHORT).show();
             }
         }
-        //Si envio una imagen
-        else {
+        //Si envio un audio
+        else if(ubicacion == null){
             if (!downloadUrlAudio.isEmpty()) {
                 FirebaseFirestore db = FirebaseFirestore.getInstance();
                 FirebaseUser usuario = FirebaseAuth.getInstance().getCurrentUser();
@@ -462,7 +538,37 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                         // Obtener la fecha y hora actual
                         String fechaHora = obtenerFechaHoraActual();
                         // Guardar el mensaje junto con la fecha y hora en Firestore
-                        Mensaje nuevoMensaje = new Mensaje(nombreUsuario, null, fechaHora, null, downloadUrlAudio);
+                        Mensaje nuevoMensaje = new Mensaje(nombreUsuario, null, fechaHora, null, downloadUrlAudio, null);
+                        db.collection("chat")
+                                .document("salas")
+                                .collection(idSala)
+                                .document(nombreSala)
+                                .collection(nombreUsuario)
+                                .add(nuevoMensaje.toMap())
+                                .addOnSuccessListener(documentReference -> {
+                                    Toast.makeText(MensajesActivity.this, "Mensaje enviado correctamente", Toast.LENGTH_SHORT).show();
+                                    // Después de enviar el mensaje, actualizar la lista
+                                    obtenerMensajes(nombreSala, idSala, participantesSala);
+                                })
+                                .addOnFailureListener(e -> Toast.makeText(MensajesActivity.this, "Error al enviar el mensaje: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                    }
+                }
+            } else {
+                Toast.makeText(this, "Por favor, escribe un mensaje", Toast.LENGTH_SHORT).show();
+            }
+        }
+        //Si envio una localizacion
+        else{
+            if (!ubicacion.isEmpty()) {
+                FirebaseFirestore db = FirebaseFirestore.getInstance();
+                FirebaseUser usuario = FirebaseAuth.getInstance().getCurrentUser();
+                if (usuario != null) {
+                    String nombreUsuario = obtenerNombreUsuario(usuario.getEmail());
+                    if (nombreUsuario != null) {
+                        // Obtener la fecha y hora actual
+                        String fechaHora = obtenerFechaHoraActual();
+                        // Guardar el mensaje junto con la fecha y hora en Firestore
+                        Mensaje nuevoMensaje = new Mensaje(nombreUsuario, null, fechaHora, null, null, ubicacion);
                         db.collection("chat")
                                 .document("salas")
                                 .collection(idSala)
@@ -515,9 +621,6 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                 });
         builder.create().show();
     }
-
-
-
 
 
 
@@ -626,7 +729,7 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                             String downloadUrl = uri.toString();
                             Log.d("URIDESCARGA", downloadUrl);
                             //Aqui llamo a enviarmensaje
-                            enviarMensaje(nombreSala, idSala, participantesSala, downloadUrl, null);
+                            enviarMensaje(nombreSala, idSala, participantesSala, downloadUrl, null, null);
 
                         }
                     }).addOnFailureListener(new OnFailureListener() {
@@ -678,7 +781,7 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                             String downloadUrl = uri.toString();
                             Log.d("URIDESCARGA", downloadUrl);
                             //Aqui llamo a enviarmensaje
-                            enviarMensaje(nombreSala, idSala, participantesSala, downloadUrl, null);
+                            enviarMensaje(nombreSala, idSala, participantesSala, downloadUrl, null, null);
                         }
                     }).addOnFailureListener(new OnFailureListener() {
                         @Override
@@ -788,6 +891,8 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
 
 
     private void mostrarMapaEnDialogo() {
+
+
         // Inflar el diseño del diálogo que contiene el MapView
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_mapa, null);
 
@@ -798,6 +903,17 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
 
         // Configurar el fragmento de autocompletado
         autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME));
+
+        // Crear un diálogo y establecer su contenido como el diseño inflado
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(dialogView);
+
+        // Configurar el ancho del diálogo (por ejemplo, el 80% del ancho de la pantalla)
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
+        lp.copyFrom(dialog.getWindow().getAttributes());
+        lp.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.9); // Cambia el factor 0.8 según sea necesario
+        dialog.getWindow().setAttributes(lp);
+
         autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             @Override
             public void onPlaceSelected(@NonNull Place place) {
@@ -853,7 +969,7 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                     }
                 });
 
-// Configurar un listener para el clic en el mapa
+                // Configurar un listener para el clic en el mapa
                 googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
                     @Override
                     public void onMapClick(LatLng latLng) {
@@ -891,7 +1007,7 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                                 AlertDialog.Builder builder = new AlertDialog.Builder(MensajesActivity.this);
                                 builder.setTitle("Enviar ubicación")
                                         .setMessage("¿Desea enviar esta ubicación?\nUbicación: " + direccion) // Agregar la dirección al mensaje del diálogo
-                                        .setPositiveButton("Enviar", new DialogInterface.OnClickListener() {
+                                        .setPositiveButton("EnviarUbi", new DialogInterface.OnClickListener() {
                                             @Override
                                             public void onClick(DialogInterface dialog, int which) {
                                                 // Convertir la latitud y longitud a cadenas
@@ -903,7 +1019,8 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
 
                                                 // Aquí puedes hacer lo que necesites con la ubicación como una cadena de texto
                                                 // Por ejemplo, puedes enviarla a través de un intent
-                                                // enviarUbicacion(ubicacionString);
+                                                enviarMensaje(nombreSala, idSala, participantesSala, null, null, ubicacionString);
+                                                dialog.dismiss();
                                             }
                                         })
                                         .setNegativeButton("Cancelar", null)
@@ -967,7 +1084,7 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                         AlertDialog.Builder builder = new AlertDialog.Builder(MensajesActivity.this);
                         builder.setTitle("Enviar ubicación")
                                 .setMessage("¿Desea enviar esta ubicación?")
-                                .setPositiveButton("Enviar", new DialogInterface.OnClickListener() {
+                                .setPositiveButton("EnviarUbi", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         // Convertir la latitud y longitud a cadenas
@@ -977,9 +1094,8 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                                         // Concatenar las cadenas en el formato deseado
                                         String ubicacionString = "Latitud: " + latitudString + ", Longitud: " + longitudString;
 
-                                        // Aquí puedes hacer lo que necesites con la ubicación como una cadena de texto
-                                        // Por ejemplo, puedes enviarla a través de un intent
-                                        // enviarUbicacion(ubicacionString);
+                                        enviarMensaje(nombreSala, idSala, participantesSala, null, null, ubicacionString);
+                                        dialog.dismiss();
                                     }
                                 })
                                 .setNegativeButton("Cancelar", null)
@@ -994,7 +1110,8 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
         botonBuscar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String direccion = autocompleteFragment.getView().toString();
+                // Verificar si autocompleteFragment.getView() es nulo antes de llamar a toString()
+                String direccion = autocompleteFragment.getView() != null ? autocompleteFragment.getView().toString() : "";
                 if (!direccion.isEmpty()) {
                     buscarDireccionYMostrarEnMapa(direccion);
                 } else {
@@ -1003,9 +1120,6 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
             }
         });
 
-        // Crear un diálogo y establecer su contenido como el diseño inflado
-        Dialog dialog = new Dialog(this);
-        dialog.setContentView(dialogView);
 
         // Configurar el evento OnDismissListener para el diálogo
         dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
@@ -1045,14 +1159,6 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
             Toast.makeText(this, "Error al buscar la dirección", Toast.LENGTH_SHORT).show();
         }
     }
-
-
-
-
-
-
-
-
 
 
 
@@ -1152,9 +1258,8 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                                     String downloadUrlAudio = uri.toString();
                                     Log.d("URL_DESCARGA_AUDIO", downloadUrlAudio);
 
-
                                     // Aquí puedes llamar a enviarMensaje
-                                    enviarMensaje(nombreSala, idSala, participantesSala, null, downloadUrlAudio);
+                                    enviarMensaje(nombreSala, idSala, participantesSala, null, downloadUrlAudio, null);
                                 }
                             }).addOnFailureListener(new OnFailureListener() {
                                 @Override
@@ -1182,39 +1287,6 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
     }
 
 
-/*
-    private void startPlaying() {
-        mediaPlayer=new MediaPlayer();
-        try {
-            mediaPlayer.setDataSource(AudioSavePath);
-            mediaPlayer.prepare();
-            mediaPlayer.seekTo(currentPosition); // Establecer la posición de reproducción guardada
-            mediaPlayer.start();
-            Toast.makeText(MensajesActivity.this, "Escuchando", Toast.LENGTH_SHORT).show();
-            isPlaying = true;
-
-            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    // La reproducción ha finalizado, restablecer el estado de reproducción
-                    isPlaying = false;
-                    currentPosition = 0; // Reiniciar la posición de reproducción
-                }
-            });
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    public void stopPlaying() {
-        if (mediaPlayer != null && isPlaying) {
-            mediaPlayer.pause(); // Pausar la reproducción
-            currentPosition = mediaPlayer.getCurrentPosition(); // Guardar la posición actual
-            Toast.makeText(MensajesActivity.this, "Parar escuchar", Toast.LENGTH_SHORT).show();
-            isPlaying = false;
-        }
-    }
-*/
     private void startVibration() {
         // Verificar si la API de Vibrator está disponible
         if (vibrator.hasVibrator()) {
@@ -1224,28 +1296,6 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
             Toast.makeText(MensajesActivity.this, "El dispositivo no tiene capacidad de vibración", Toast.LENGTH_SHORT).show();
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     private String obtenerNombreUsuario(String email) {
@@ -1298,5 +1348,9 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
         intent.putExtra("imageUrl", imageUrl);
         startActivity(intent);
     }
+
+
+
+
 }
 
