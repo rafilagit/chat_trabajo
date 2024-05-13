@@ -306,14 +306,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void actualizarImagenDeFondoChat(String selectedImageName) {
-        int drawableResId = obtenerResourceIdPorNombre(selectedImageName);
-        if (drawableResId != 0) {
-            ImageView imageViewFondoSala = findViewById(R.id.imageViewFondoSala);
-
-            imageViewFondoSala.setImageResource(drawableResId);
-        }
-    }
     private int obtenerImagenId(String nombreImagen) {
         int imagenId = 0; // Valor predeterminado en caso de que no se encuentre la imagen
 
@@ -341,36 +333,7 @@ public class MainActivity extends AppCompatActivity {
         return imagenId;
     }
 
-    private int obtenerResourceIdPorNombre(String imageName) {
-        switch (imageName) {
-            case "Fondo Default":
-                return R.drawable.fondo_default;
-            case "Fondo Agua y Luz":
-                return R.drawable.fondo_agua_luz;
-            case "Fondo Árboles":
-                return R.drawable.fondo_arboles;
-            // Agregar más casos según sea necesario para otras imágenes
-            default:
-                return 0;
-        }
-    }
-    private Integer obtenerIdDeImagen(String nombreImagen) {
-        // HashMap que contiene la relación entre nombres de imágenes y IDs de recursos
-        HashMap<String, Integer> nombreToDrawableId = new HashMap<>();
-        nombreToDrawableId.put("Fondo Default", R.drawable.fondo_default);
-        nombreToDrawableId.put("Fondo Agua y Luz", R.drawable.fondo_agua_luz);
-        nombreToDrawableId.put("Fondo Árboles", R.drawable.fondo_arboles);
-        nombreToDrawableId.put("Fondo Atardecer", R.drawable.fondo_atardecer);
-        nombreToDrawableId.put("Fondo Nubes Lilas", R.drawable.fondo_nubes_lilas);
-        nombreToDrawableId.put("Fondo Neón", R.drawable.fondo_neon);
 
-        // Buscar el ID de recurso correspondiente al nombre de la imagen en el HashMap
-        if (nombreToDrawableId.containsKey(nombreImagen)) {
-            return nombreToDrawableId.get(nombreImagen);
-        } else {
-            return null; // Si no se encuentra el nombre de la imagen, devuelve null
-        }
-    }
 
 
     private void obtenerNombresUsuarios(OnUsuariosObtenidosListener listener) {
