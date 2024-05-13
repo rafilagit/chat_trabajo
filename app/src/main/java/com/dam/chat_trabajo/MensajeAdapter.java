@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -99,7 +100,11 @@ public class MensajeAdapter extends ArrayAdapter<Mensaje> {
         TextView textViewNombreUsuario = convertView.findViewById(R.id.textViewNombreUsuario);
         TextView textViewMensaje = convertView.findViewById(R.id.textViewMensaje);
         TextView textViewFechaHora = convertView.findViewById(R.id.textViewFechaHora);
-        Button btnReproducirAudio = convertView.findViewById(R.id.btnReproducirAudio);
+        ImageButton btnReproducirAudio = convertView.findViewById(R.id.buttonReproducir);
+        ImageView barra = convertView.findViewById(R.id.barra);
+        ImageView onda = convertView.findViewById(R.id.onda);
+
+
         MapView mapView = convertView.findViewById(R.id.mapView);
 
 
@@ -116,9 +121,13 @@ public class MensajeAdapter extends ArrayAdapter<Mensaje> {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         if (!isPlaying) {
+                            // Si no está reproduciendo, iniciar la reproducción
                             startPlaying(position);
+                            btnReproducirAudio.setImageResource(R.drawable.pausa);
                         } else {
+                            // Si está reproduciendo, detener la reproducción
                             stopPlaying(position);
+                            btnReproducirAudio.setImageResource(R.drawable.reproducir);
                         }
                         return true;
                 }
@@ -126,13 +135,14 @@ public class MensajeAdapter extends ArrayAdapter<Mensaje> {
             }
         });
 
-
         // Verificar si el mensaje es una imagen o un mensaje de texto
         if (mensaje.getImagen() != null) {
             // Si es una imagen, ocultar el TextView del mensaje y cargar la imagen en el ImageView
             textViewMensaje.setVisibility(View.GONE);
             mapView.setVisibility(View.GONE);
             btnReproducirAudio.setVisibility(View.GONE);
+            barra.setVisibility(View.GONE);
+            onda.setVisibility(View.GONE);
             imageViewImagen.setVisibility(View.VISIBLE);
 
 
@@ -189,7 +199,10 @@ public class MensajeAdapter extends ArrayAdapter<Mensaje> {
             mapView.setVisibility(View.GONE);
             imageViewImagen.setVisibility(View.GONE);
             btnReproducirAudio.setVisibility(View.GONE);
+            onda.setVisibility(View.GONE);
+            barra.setVisibility(View.GONE);
             textViewMensaje.setVisibility(View.VISIBLE);
+
 
             textViewMensaje.setText(mensaje.getContenidoMensaje());
         }
@@ -201,6 +214,9 @@ public class MensajeAdapter extends ArrayAdapter<Mensaje> {
             imageViewImagen.setVisibility(View.GONE);
             btnReproducirAudio.setVisibility(View.GONE);
             mapView.setVisibility(View.VISIBLE);
+            btnReproducirAudio.setVisibility(View.GONE);
+            onda.setVisibility(View.GONE);
+            barra.setVisibility(View.GONE);
 
             // Inicializar el MapView
             mapView.onCreate(null); // No pasamos un Bundle de estado guardado
@@ -239,9 +255,12 @@ public class MensajeAdapter extends ArrayAdapter<Mensaje> {
             textViewMensaje.setVisibility(View.GONE);
             imageViewImagen.setVisibility(View.GONE); // Ocultar el ImageView
             mapView.setVisibility(View.GONE);
+            btnReproducirAudio.setVisibility(View.VISIBLE);
+            onda.setVisibility(View.VISIBLE);
+            barra.setVisibility(View.VISIBLE);
+
 
             // Mostrar el botón de reproducción de audio en su lugar
-            btnReproducirAudio.setVisibility(View.VISIBLE);
         }
 
 

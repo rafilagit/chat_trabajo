@@ -1182,7 +1182,7 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
             File carpeta= getFilesDir();
             audio=new File(carpeta,fichero_audio);
             AudioSavePath=audio.getAbsolutePath();
-            Toast.makeText(MensajesActivity.this, AudioSavePath, Toast.LENGTH_LONG).show();
+            //Toast.makeText(MensajesActivity.this, AudioSavePath, Toast.LENGTH_LONG).show();
 
 
             mediaRecorder=new MediaRecorder();
@@ -1194,7 +1194,7 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
             try {
                 mediaRecorder.prepare();
                 mediaRecorder.start();
-                Toast.makeText(MensajesActivity.this, "habla", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MensajesActivity.this, "Habla", Toast.LENGTH_SHORT).show();
             } catch (IOException e) {
                 Toast.makeText(MensajesActivity.this, "error", Toast.LENGTH_SHORT).show();
 
@@ -1219,7 +1219,7 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                 mediaRecorder.stop();
                 mediaRecorder.release();
                 mediaRecorder = null; // Marcar el MediaRecorder como nulo después de liberar los recursos
-                Toast.makeText(MensajesActivity.this, "Stop", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MensajesActivity.this, "Grabacion finalizada", Toast.LENGTH_SHORT).show();
                 String nombreUsuario = obtenerNombreUsuario(usuario.getEmail()).toString();
                 String fechaHora = obtenerFechaHoraActual().toString();
                 fechaHora = quitarBarrasFechaYHora(fechaHora);
