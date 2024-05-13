@@ -92,15 +92,40 @@ public class LoginActivity extends AppCompatActivity {
         ActivityCompat.requestPermissions(this,
                 new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.READ_CONTACTS,
+                        Manifest.permission.CAMERA,
+                        Manifest.permission.RECORD_AUDIO,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.READ_MEDIA_AUDIO,
+                        Manifest.permission.READ_MEDIA_VIDEO,
+                        Manifest.permission.READ_MEDIA_IMAGES,
+                        Manifest.permission.VIBRATE,
                         Manifest.permission.READ_EXTERNAL_STORAGE},
                 PERMISSION_REQUEST_CODE);
     }
     private boolean checkPermissions() {
+        int vibrate=ContextCompat.checkSelfPermission(this, Manifest.permission.VIBRATE);
         int permissionLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
         int permissionContacts = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS);
         int permissionStorage = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
-        return permissionLocation == PackageManager.PERMISSION_GRANTED && permissionContacts == PackageManager.PERMISSION_GRANTED && permissionStorage == PackageManager.PERMISSION_GRANTED;
-    }
+        int permissionAudio = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO);
+        int permissionVideo = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO);
+        int permissionWriteStorage = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int permissionImages = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES);
+        int permissionCamera = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
+        int permissionRecordAudio = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO); // Verificar permiso del micrófono
+
+        return permissionLocation == PackageManager.PERMISSION_GRANTED &&
+                vibrate==PackageManager.PERMISSION_GRANTED &&
+                permissionContacts == PackageManager.PERMISSION_GRANTED &&
+                permissionStorage == PackageManager.PERMISSION_GRANTED &&
+                permissionCamera == PackageManager.PERMISSION_GRANTED &&
+                permissionAudio == PackageManager.PERMISSION_GRANTED &&
+                permissionVideo == PackageManager.PERMISSION_GRANTED &&
+                permissionImages== PackageManager.PERMISSION_GRANTED &&
+                permissionRecordAudio == PackageManager.PERMISSION_GRANTED &&
+                permissionWriteStorage == PackageManager.PERMISSION_GRANTED;
+        }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,@NonNull String[] permissions,@NonNull int[] grantResults)
