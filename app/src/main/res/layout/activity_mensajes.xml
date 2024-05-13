@@ -3,11 +3,22 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Fondo de pantalla -->
+    <ImageView
+        android:id="@+id/imageViewFondoSala"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/fondo_neon" />
+
+    <!-- Lista de mensajes -->
     <ListView
         android:id="@+id/listView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/layoutMensaje"
+
+        android:background="@android:color/transparent" />
         android:divider="@null"
         android:dividerHeight="3dp"
         android:paddingLeft="5dp"
@@ -21,8 +32,27 @@
         android:orientation="horizontal"
         android:padding="16dp"
         android:layout_alignParentBottom="true"
+
+        android:background="@android:color/white">
+
+        <EditText
+            android:id="@+id/editTextMensaje"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Escribe tu mensaje aquí"
+            android:inputType="textMultiLine"
+            android:maxLines="4" />
+
+        <Button
+            android:id="@+id/buttonEnviar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enviar" />
+
         android:background="@android:color/white"
         android:elevation="8dp">
+
 
         <ImageButton
             android:id="@+id/buttonAudio"

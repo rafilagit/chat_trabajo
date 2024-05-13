@@ -1,14 +1,19 @@
 package com.dam.chat_trabajo;
 
+import static java.security.AccessController.getContext;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -21,6 +26,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -29,8 +35,11 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -85,6 +94,7 @@ public class MainActivity extends AppCompatActivity {
                     // Agregar parámetros extra al intent
                     intent.putExtra("nombreSala", salaSeleccionada.getNombre());
                     intent.putExtra("idSala", salaSeleccionada.getId());
+                    intent.putExtra("imagen", salaSeleccionada.getImagen());
                     intent.putStringArrayListExtra("participantesSala", new ArrayList<>(salaSeleccionada.getParticipantes()));
 
                     // Iniciar la actividad de mensajes
@@ -100,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
 
         Button botonCerrarSesion = findViewById(R.id.logout);
         Button botonCrearSala = findViewById(R.id.crearSala);
+        //Button botonEliminarSala = findViewById(R.id.boEliminarSala);
 
         botonCerrarSesion.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -119,161 +130,210 @@ public class MainActivity extends AppCompatActivity {
                 mostrarDialogoCrearSala();
             }
         });
-    }
 
+    }
     private void mostrarSalas() {
-        db.collection("chat").document("salas_aux").collection("salas").get()  //chat/salas_aux/salas
-                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-                    @Override
-                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                        if (!queryDocumentSnapshots.isEmpty()) {
-                            for (DocumentSnapshot document : queryDocumentSnapshots.getDocuments()) { //queryDocumentSnapshots.getDocuments() lista de todos los documentos de la sala
-                                // Obtener datos de la sala                                           //DocumentSnapshot document variable de cada documento
-                                String idSala = document.getId();
-                                String nombreSala = document.getString("nombre");
-                                String participantesString = (String) document.get("usuarios");
-                                List<String> participantes = null;
-                                if (participantesString != null && !participantesString.isEmpty()) {
-                                    // Eliminar la última coma si existe
-                                    if (participantesString.charAt(participantesString.length() - 1) == ',') {
-                                        participantesString = participantesString.substring(0, participantesString.length() - 1);
-                                    }
-                                    participantes = Arrays.asList(participantesString.split(","));
-                                    // Ahora tienes la lista de participantes sin la última coma
-                                }
-                                // Verificar si el usuario actual está entre los participantes
-                                if (participantes != null && participantes.contains(obtenerNombreUsuario(usuario.getEmail()))) {
-                                    // Verificar si la sala ya se ha mostrado, si se ha mostrado no se añade y por tanto no se muestra de nuevo
-                                    boolean salaExistente = false;
-                                    for (Sala sala : salasList) {
-                                        if (sala.getId().equals(idSala)) {
-                                            salaExistente = true;
-                                            break;
-                                        }
-                                    }
-                                    if (!salaExistente) {
-                                        // Crear objeto Sala y añadirlo a la lista
-                                        Sala sala = new Sala(idSala, nombreSala, participantes);
-                                        salasList.add(sala);
-                                    }
-                                }
-                            }
-                            // Notificar al adaptador que los datos han cambiado
-                            salasAdapter.notifyDataSetChanged();
-                        } else {
-                            Log.d("MainActivity", "No existen salas en la base de datos.");
+        db.collection("chat").document("salas_aux").collection("salas").get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    salasList.clear(); // Limpiar la lista existente antes de agregar las nuevas salas
+                    for (DocumentSnapshot document : queryDocumentSnapshots.getDocuments()) {
+                        // Obtener datos de la sala
+                        String idSala = document.getId();
+                        String nombreSala = document.getString("nombre");
+                        String participantesString = document.getString("usuarios");
+                        String admin = document.getString("admin");
+                        Long imagenLong = document.getLong("imagen");
+                        int imagen = (imagenLong != null) ? imagenLong.intValue() : 0;
+
+                        List<String> participantes = new ArrayList<>();
+                        if (participantesString != null && !participantesString.isEmpty()) {
+                            participantes = Arrays.asList(participantesString.split(","));
                         }
+
+                        // Crear objeto Sala y añadirlo a la lista existente
+                        Sala sala = new Sala(idSala, nombreSala, participantes, admin, imagen);
+                        salasList.add(sala);
                     }
+                    // Notificar al adaptador que los datos han cambiado
+                    salasAdapter.notifyDataSetChanged();
                 })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.e("MainActivity", "Error al obtener las salas: " + e.getMessage());
-                    }
+                .addOnFailureListener(e -> {
+                    Log.e("MainActivity", "Error al obtener las salas: " + e.getMessage());
                 });
     }
 
+
     private void mostrarDialogoCrearSala() {
-        // Verificar si usuario no es null antes de usarlo
         if (usuario != null) {
             String nombreUsuario = obtenerNombreUsuario(usuario.getEmail());
             obtenerNombresUsuarios(nombresUsuarios -> {
                 nombresUsuarios.remove(nombreUsuario);
 
-                // Inflar el diseño XML del diálogo flotante
+                // Inflar el layout del diálogo
                 LayoutInflater inflater = LayoutInflater.from(this);
                 View dialogLayout = inflater.inflate(R.layout.dialog_crear_sala, null);
 
-                // EditText para el nombre de la sala (ya existe)
+                // Obtener referencias a las vistas del diálogo
                 EditText editTextNombreSala = dialogLayout.findViewById(R.id.editTextNombreSala);
-
-                // RecyclerView para mostrar la lista de usuarios con casillas de verificación
                 RecyclerView recyclerViewUsuarios = dialogLayout.findViewById(R.id.recyclerViewUsuarios);
-                recyclerViewUsuarios.setLayoutManager(new LinearLayoutManager(this));
+                recyclerViewUsuarios.setLayoutManager(new LinearLayoutManager(MainActivity.this));
 
-                // Adaptador para la lista de usuarios
+                // Configurar RecyclerView para mostrar la lista de usuarios
                 UsuariosAdapter usuariosAdapter = new UsuariosAdapter(nombresUsuarios);
                 recyclerViewUsuarios.setAdapter(usuariosAdapter);
 
-                // Construir el diálogo flotante (ya existe)
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setView(dialogLayout);
-                builder.setTitle("Crear Sala");
-                builder.setPositiveButton("Crear", (dialog, which) -> {
-                    // Obtener el nombre de la sala
-                    String nombreSala = editTextNombreSala.getText().toString().trim();
+                Spinner spinnerBackgroundImages = dialogLayout.findViewById(R.id.spinnerBackgroundImages);
+                // Configurar Spinner con las opciones de imágenes de fondo
+                String[] nombresImagenes = {"Fondo Default", "Fondo Agua y Luz", "Fondo Árboles", "Fondo Atardecer", "Fondo Nubes Lilas", "Fondo Neón"};
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, nombresImagenes);
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinnerBackgroundImages.setAdapter(adapter);
 
-                    // Validar que se ingresó un nombre de sala
-                    if (nombreSala.isEmpty()) {
-                        Toast.makeText(MainActivity.this, "Por favor, ingresa un nombre para la sala", Toast.LENGTH_SHORT).show();
-                        return;
+               /* spinnerBackgroundImages.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                        String selectedImageName = (String) parent.getItemAtPosition(position);
+                        actualizarImagenDeFondoChat(selectedImageName);
                     }
 
-                    // Obtener los usuarios seleccionados
-                    List<String> usuariosSeleccionados = usuariosAdapter.getUsuariosSeleccionados();
-
-                    // Añadir tu nombre de usuario a la lista
-                    if (!usuariosSeleccionados.contains(nombreUsuario)) {
-                        usuariosSeleccionados.add(nombreUsuario);
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {
+                        // Manejar el caso en el que no se haya seleccionado nada (opcional)
                     }
+                });
+                */
 
-                    // Construir el string con los usuarios seleccionados separados por comas
-                    StringBuilder usuariosString = new StringBuilder();
-                    for (String usuario : usuariosSeleccionados) {
-                        usuariosString.append(usuario).append(",");
-                    }
 
-                    // Generar un identificador único de 10 caracteres para la nueva sala
-                    String idSala = Utils.generateUniqueID();
+                // Construir el diálogo de creación de sala
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setView(dialogLayout)
+                        .setTitle("Crear Sala")
+                        .setPositiveButton("Crear", (dialog, which) -> {
+                            String selectedBackground = (String) spinnerBackgroundImages.getSelectedItem();
+                            String nombreSala = editTextNombreSala.getText().toString().trim();
+                            List<String> usuariosSeleccionados = usuariosAdapter.getUsuariosSeleccionados();
 
-                    // Crear un mapa con los datos de la sala
-                    Map<String, Object> sala = new HashMap<>();
-                    sala.put("nombre", nombreSala);
-                    sala.put("usuarios", usuariosString.toString());
-                    sala.put("salaId", idSala); // Agregar el ID de la sala al mapa
+                            if (nombreSala.isEmpty()) {
+                                Toast.makeText(MainActivity.this, "Por favor, ingresa un nombre para la sala", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
 
-                    // Añadir la sala al Firestore con el identificador único como nombre de la colección
-                    db.collection("chat")
-                            .document("salas_aux")
-                            .collection("salas")
-                            .document(idSala)
-                            .set(sala)
-                            .addOnSuccessListener(aVoid -> {
-                                Toast.makeText(MainActivity.this, "Sala creada correctamente", Toast.LENGTH_SHORT).show();
-
-                                // Crear colecciones dentro de la sala para cada participante
-                                for (String participante : usuariosSeleccionados) {
-                                    db.collection("chat")
-                                            .document("salas")
-                                            .collection(idSala)
-                                            .document(nombreSala)
-                                            .collection(participante)
-                                            .add(new HashMap<>())
-                                            .addOnSuccessListener(aVoid1 -> {
-                                                Log.d("MainActivity", "Colección creada para participante: " + participante);
-                                            })
-                                            .addOnFailureListener(e -> {
-                                                Log.e("MainActivity", "Error al crear la colección para participante: " + participante, e);
-                                            });
+                            // Verificar si la sala ya existe en la lista local
+                            boolean salaExistente = false;
+                            for (Sala existingSala : salasList) {
+                                if (existingSala.getNombre().equals(nombreSala)) {
+                                    salaExistente = true;
+                                    break;
                                 }
-                            })
-                            .addOnFailureListener(e -> {
-                                Toast.makeText(MainActivity.this, "Error al crear la sala: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                            });
-                });
-                builder.setNegativeButton("Cancelar", (dialog, which) -> {
-                    // Cerrar el diálogo si se presiona el botón "Cancelar"
-                    dialog.cancel();
-                });
+                            }
 
-                // Mostrar el diálogo flotante (ya existe)
-                AlertDialog dialog = builder.create();
-                dialog.show();
+                            if (salaExistente) {
+                                Toast.makeText(MainActivity.this, "La sala ya existe", Toast.LENGTH_SHORT).show();
+                            } else {
+                                if (!usuariosSeleccionados.contains(nombreUsuario)) {
+                                    usuariosSeleccionados.add(nombreUsuario);
+                                }
+
+                                StringBuilder usuariosString = new StringBuilder();
+                                for (String usuario : usuariosSeleccionados) {
+                                    usuariosString.append(usuario).append(",");
+                                }
+
+                                String idSala = Utils.generateUniqueID();
+                                guardarSala(nombreSala, idSala, selectedBackground, usuariosSeleccionados);
+                                mostrarSalas();
+                            }
+                        })
+                        .show(); // Mostrar el diálogo después de configurarlo
+
             });
         } else {
             Log.e("MainActivity", "El objeto usuario es null");
         }
     }
+
+
+
+
+
+
+
+    private void guardarSala(String nombreSala, String idSala, String imagen, List<String> usuariosSeleccionados) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Verificar si la sala ya existe localmente
+        boolean salaExistente = false;
+        for (Sala existingSala : salasList) {
+            if (existingSala.getId().equals(idSala)) {
+                salaExistente = true;
+                break;
+            }
+        }
+
+        if (!salaExistente) {
+            // Crear un mapa con los datos de la sala a guardar en Firestore
+            Map<String, Object> salaMapa = new HashMap<>();
+            salaMapa.put("nombre", nombreSala);
+            salaMapa.put("usuarios", usuariosSeleccionados.toString()); // Convertir lista a String separada por comas
+            salaMapa.put("salaId", idSala);
+            salaMapa.put("admin", obtenerNombreUsuario(FirebaseAuth.getInstance().getCurrentUser().getEmail())); // Obtener el nombre del usuario actual como admin
+            salaMapa.put("imagen", obtenerImagenId(imagen)); // Guardar la ID de la imagen de fondo
+
+            // Guardar la sala en Firestore
+            db.collection("chat")
+                    .document("salas_aux")
+                    .collection("salas")
+                    .document(idSala)
+                    .set(salaMapa)
+                    .addOnSuccessListener(aVoid -> {
+                        // Mostrar mensaje de éxito
+                        Toast.makeText(MainActivity.this, "Sala creada correctamente", Toast.LENGTH_SHORT).show();
+                        // Agregar la sala a la lista local solo si no existe
+                        Sala sala = new Sala(idSala, nombreSala, usuariosSeleccionados, obtenerNombreUsuario(FirebaseAuth.getInstance().getCurrentUser().getEmail()), obtenerImagenId(imagen));
+                        salasList.add(sala);
+
+                        // Notificar al adaptador que los datos han cambiado
+                        //salasAdapter.notifyDataSetChanged();
+                        //suscribirListenerSalas();
+
+                    })
+                    .addOnFailureListener(e -> {
+                        // Mostrar mensaje de error en caso de falla
+                        Toast.makeText(MainActivity.this, "Error al crear la sala: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+        } else {
+            Toast.makeText(MainActivity.this, "La sala ya existe localmente", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private int obtenerImagenId(String nombreImagen) {
+        int imagenId = 0; // Valor predeterminado en caso de que no se encuentre la imagen
+
+        // Mapa que relaciona los nombres de las imágenes con sus IDs en /res/drawable
+        HashMap<String, Integer> mapaImagenes = new HashMap<>();
+        mapaImagenes.put("Fondo Default", R.drawable.fondo_default);
+        mapaImagenes.put("Fondo Agua y Luz", R.drawable.fondo_agua_luz);
+        mapaImagenes.put("Fondo Árboles", R.drawable.fondo_arboles);
+        mapaImagenes.put("Fondo Atardecer", R.drawable.fondo_atardecer);
+        mapaImagenes.put("Fondo Nubes Lilas", R.drawable.fondo_nubes_lilas);
+        mapaImagenes.put("Fondo Neón", R.drawable.fondo_neon);
+
+        // Verificar si el nombre de la imagen existe en el mapa
+        if (mapaImagenes.containsKey(nombreImagen)) {
+            imagenId = mapaImagenes.get(nombreImagen);
+        } else {
+            // Si el nombre de la imagen no se encuentra, podemos manejarlo según las necesidades
+            // Por ejemplo, mostrar una imagen predeterminada o lanzar una excepción
+            // También puedes retornar un valor predeterminado o null
+            // Aquí, se asigna 0 como valor predeterminado si no se encuentra la imagen
+            // Pero podemos modificar esto según se necesite en la aplicación
+            Log.e("MainActivity", "Nombre de imagen no válido: " + nombreImagen);
+        }
+
+        return imagenId;
+    }
+
+
 
 
     private void obtenerNombresUsuarios(OnUsuariosObtenidosListener listener) {
@@ -300,26 +360,71 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void suscribirListenerSalas() {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private Set<String> salaIdsSet = new HashSet<>();
 
-        // Suscribirse a los cambios en la colección de salas
+    private void suscribirListenerSalas() {
         db.collection("chat")
                 .document("salas_aux")
                 .collection("salas")
                 .addSnapshotListener((queryDocumentSnapshots, error) -> {
                     if (error != null) {
-                        Log.e("Error", "Error al obtener las salas", error);
+                        Log.e("MainActivity", "Error al escuchar las salas", error);
                         return;
                     }
 
-                    // Llamar al método mostrarSalas() para actualizar la lista de salas
-                    mostrarSalas();
+                    if (queryDocumentSnapshots != null) {
+                        for (DocumentChange change : queryDocumentSnapshots.getDocumentChanges()) {
+                            DocumentSnapshot document = change.getDocument();
+                            String idSala = document.getId();
+
+                            switch (change.getType()) {
+                                case ADDED:
+                                    if (!salaIdsSet.contains(idSala)) {
+                                        // Sala no existe en el conjunto, procesarla
+                                        String nombreSala = document.getString("nombre");
+                                        String participantesString = document.getString("usuarios");
+                                        String admin = document.getString("admin");
+                                        Long imagenLong = document.getLong("imagen");
+                                        int imagen = (imagenLong != null) ? imagenLong.intValue() : 0;
+
+                                        List<String> participantes = new ArrayList<>();
+                                        if (participantesString != null && !participantesString.isEmpty()) {
+                                            participantes = Arrays.asList(participantesString.split(","));
+                                        }
+
+                                        // Agregar la ID al conjunto
+                                        salaIdsSet.add(idSala);
+
+                                        // Crear objeto Sala y agregarlo a la lista solo si no existe
+                                        boolean salaExistente = false;
+                                        for (Sala sala : salasList) {
+                                            if (sala.getId().equals(idSala)) {
+                                                salaExistente = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!salaExistente) {
+                                            Sala nuevaSala = new Sala(idSala, nombreSala, participantes, admin, imagen);
+                                            salasList.add(nuevaSala);
+                                        }
+                                    }
+                                    break;
+
+                                case REMOVED:
+                                    // Eliminar la sala del conjunto y de la lista
+                                    salaIdsSet.remove(idSala);
+                                    salasList.removeIf(sala -> sala.getId().equals(idSala));
+                                    break;
+
+                                // Otros casos (MODIFIED)
+                            }
+                        }
+
+                        // Notificar al adaptador que los datos han cambiado
+                        salasAdapter.notifyDataSetChanged();
+                    }
                 });
     }
-
-
-
 
     private void crearUsuarioDDBB(String nombreUsuario) {
 
@@ -335,7 +440,7 @@ public class MainActivity extends AppCompatActivity {
                                 .update(nombreUsuario, true)
                                 .addOnSuccessListener(aVoid -> {
                                     // Campo de usuario actualizado exitosamente
-                                    Toast.makeText(MainActivity.this, "Es tu primera vez en el chat? "+nombreUsuario, Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(MainActivity.this, "¡Es tu primera vez en el chat! Bienvenido " + nombreUsuario, Toast.LENGTH_SHORT).show();
                                 })
                                 .addOnFailureListener(e -> {
                                     // Error al actualizar el campo de usuario
@@ -343,7 +448,7 @@ public class MainActivity extends AppCompatActivity {
                                 });
                     } else {
                         // Ya existe un campo con el nombre de usuario
-                        Toast.makeText(MainActivity.this, "Bienvenido "+nombreUsuario, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "Bienvenido " + nombreUsuario, Toast.LENGTH_SHORT).show();
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -351,10 +456,12 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "Error al verificar el documento de usuarios: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
-
     interface OnUsuariosObtenidosListener {
         void onUsuariosObtenidos(List<String> nombresUsuarios);
     }
-}
+    }
+
+
+
 
 
