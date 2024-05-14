@@ -1,4 +1,4 @@
-package com.dam.chat_trabajo;
+package com.dam.chat_trabajo.Mensajes;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,6 +10,7 @@ import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.dam.chat_trabajo.R;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 

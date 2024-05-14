@@ -1,4 +1,4 @@
-package com.dam.chat_trabajo;
+package com.dam.chat_trabajo.Salas;
 
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +10,9 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+
+import com.dam.chat_trabajo.Mensajes.MensajesActivity;
+import com.dam.chat_trabajo.R;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.dam.chat_trabajo;
+package com.dam.chat_trabajo.Salas;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -17,10 +17,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.dam.chat_trabajo.Login.LoginActivity;
+import com.dam.chat_trabajo.Mensajes.MensajesActivity;
+import com.dam.chat_trabajo.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -31,6 +36,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -41,6 +47,18 @@ public class MainActivity extends AppCompatActivity {
     private List<Sala> salasList;
     private ListView listViewSalas;
 
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        String nombreUsuario = obtenerNombreUsuario(usuario.getEmail());
+        usuario = auth.getCurrentUser();
+        // Obtener la referencia a la base de datos
+        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
+        // Establecer el valor en la base de datos para el nombre de usuario como false
+        databaseReference.child("disponibilidad").child(Objects.requireNonNull(nombreUsuario)).setValue(false);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
         usuario = auth.getCurrentUser();
         db = FirebaseFirestore.getInstance();
+        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
 
 
         if (usuario == null) {
@@ -62,7 +81,8 @@ public class MainActivity extends AppCompatActivity {
 
             // Crear un campo en el documento usuarios de la coleccion chat--> chat/usuarios
             crearUsuarioDDBB(nombreUsuario);
-
+            assert nombreUsuario != null;
+            databaseReference.child(nombreUsuario).setValue("");
             // Inicializar la lista de salas y el adaptador
             salasList = new ArrayList<>();
             salasAdapter = new SalasAdapter(this, salasList, nombreUsuario);

@@ -1,20 +1,17 @@
-package com.dam.chat_trabajo;
+package com.dam.chat_trabajo.Mensajes;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.location.Address;
-import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
@@ -29,7 +26,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -38,6 +34,7 @@ import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -48,6 +45,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.bumptech.glide.Glide;
+import com.dam.chat_trabajo.R;
+import com.dam.chat_trabajo.Salas.MainActivity;
+import com.dam.chat_trabajo.ui.CallActivity;
+import com.dam.chat_trabajo.ui.LlamaActivity;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -64,19 +65,18 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
-import com.google.android.libraries.places.api.model.AutocompleteSessionToken;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.squareup.picasso.Picasso;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -89,7 +89,8 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import android.os.Handler;
+import java.util.Objects;
+
 import android.widget.AbsListView;
 
 public class MensajesActivity extends AppCompatActivity implements MensajeAdapter.OnImageMessageLongClickListener, MensajeAdapter.OnLocationClickListener {
@@ -98,6 +99,7 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
     private MensajeAdapter adapter;
     private EditText editTextMensaje;
     private ImageButton buttonEnviar;
+    private ImageButton buttonLlamada;
     private ImageButton botonScrollAbajo; // Declarar el botón de scroll hacia abajo
     private FirebaseAuth auth;
     private FirebaseUser usuario;
@@ -122,12 +124,22 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
 
     private String lastSelectedLocation; // Variable para almacenar la última ubicación seleccionada
 
-
+    @Override
+    protected void onStart() {
+        super.onStart();
+        String nombreUsuario = obtenerNombreUsuario(usuario.getEmail());
+        usuario = auth.getCurrentUser();
+        // Obtener la referencia a la base de datos
+        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
+        // Establecer el valor en la base de datos para el nombre de usuario como false
+        databaseReference.child("disponibilidad").child(Objects.requireNonNull(nombreUsuario)).setValue(false);
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mensajes);
+        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
 
         // Recuperar los parámetros del Intent
         Intent intent = getIntent();
@@ -147,6 +159,7 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
         editTextMensaje = findViewById(R.id.editTextMensaje);
         buttonEnviar = findViewById(R.id.buttonEnviar);
         buttonAudio = findViewById(R.id.buttonAudio);
+        buttonLlamada = findViewById(R.id.botonLLamada);
         vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         botonScrollAbajo = findViewById(R.id.botonScrollAbajo); // Obtener referencia al botón de scroll hacia abajo
         auth = FirebaseAuth.getInstance();
@@ -158,12 +171,32 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
         // Inicializar el servicio de Places
         Places.initialize(getApplicationContext(), "AIzaSyDXgkZ7WoIg0hW6X-9MReKQTozYqn3yZ_s");
 
+
+
+        assert nombreUsuario != null;
+        databaseReference.child("disponibilidad").child(Objects.requireNonNull(nombreUsuario)).setValue(false);
+
+
         buttonEnviar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 enviarMensaje(nombreSala, idSala, participantesSala, null, null, null);
             }
         });
+
+
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // Iniciar la actividad de MensajesActivity cuando se presione el botón de retroceso
+                Intent intent = new Intent(MensajesActivity.this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                finish();
+            }
+        });
+
 
 
         buttonAudio.setOnTouchListener(new View.OnTouchListener() {
@@ -203,6 +236,32 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                 listView.smoothScrollToPosition(adapter.getCount() - 1);
             }
         });
+
+        buttonLlamada.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Recuperar los parámetros del Intent
+                Intent intent = getIntent();
+                if (intent != null) {
+                    String nombreSala = intent.getStringExtra("nombreSala");
+                    String idSala = intent.getStringExtra("idSala");
+                    ArrayList<String> participantesSala = intent.getStringArrayListExtra("participantesSala");
+                    String nombreUsuario = obtenerNombreUsuario(usuario.getEmail());
+
+                    // Crear un Intent para iniciar LlamaActivity y pasar los parámetros
+                    Intent llamadaIntent = new Intent(MensajesActivity.this, LlamaActivity.class);
+                    llamadaIntent.putExtra("nombreSala", nombreSala);
+                    llamadaIntent.putExtra("idSala", idSala);
+                    llamadaIntent.putStringArrayListExtra("participantesSala", participantesSala);
+                    llamadaIntent.putExtra("nombreUsuario", nombreUsuario);
+
+                    // Iniciar LlamaActivity
+                    startActivity(llamadaIntent);
+                }
+            }
+        });
+
+
 
         // Ocultar el botón de scroll hacia abajo al inicio
         botonScrollAbajo.setVisibility(View.GONE);
@@ -308,16 +367,12 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
     }
 
 
-
-
     // Método para verificar si es posible hacer scroll hacia abajo
     private boolean canScrollDown(ListView listView) {
         final int lastItemPosition = listView.getLastVisiblePosition();
         final int lastVisiblePosition = listView.getChildCount() - 1;
         return lastItemPosition >= lastVisiblePosition && lastVisiblePosition > 0;
     }
-
-
 
 
     private void suscribirListenerMensajes(String nombreSala, String idSala, ArrayList<String> participantesSala) {

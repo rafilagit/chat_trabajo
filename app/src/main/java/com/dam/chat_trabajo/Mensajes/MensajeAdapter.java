@@ -1,10 +1,8 @@
-package com.dam.chat_trabajo;
+package com.dam.chat_trabajo.Mensajes;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -14,6 +12,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.dam.chat_trabajo.R;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -22,12 +21,10 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.squareup.picasso.Picasso;
 import android.graphics.drawable.Drawable; // Agrega esta importación
-import android.widget.Toast;
 
 import com.squareup.picasso.Target; // Agrega esta importación
 
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;

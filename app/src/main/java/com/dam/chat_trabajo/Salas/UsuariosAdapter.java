@@ -1,4 +1,4 @@
-package com.dam.chat_trabajo;
+package com.dam.chat_trabajo.Salas;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,6 +8,8 @@ import android.widget.CompoundButton;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.dam.chat_trabajo.R;
 
 import java.util.ArrayList;
 import java.util.List;

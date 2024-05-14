@@ -1,11 +1,10 @@
-package com.dam.chat_trabajo;
+package com.dam.chat_trabajo.Login;
 
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -20,8 +19,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import android.app.Activity;
 
+import com.dam.chat_trabajo.Salas.MainActivity;
+import com.dam.chat_trabajo.R;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -36,6 +36,7 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -92,7 +93,6 @@ public class LoginActivity extends AppCompatActivity {
         ActivityCompat.requestPermissions(this,
                 new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.READ_CONTACTS,
-                        Manifest.permission.CAMERA,
                         Manifest.permission.RECORD_AUDIO,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE,
                         Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -100,6 +100,7 @@ public class LoginActivity extends AppCompatActivity {
                         Manifest.permission.READ_MEDIA_VIDEO,
                         Manifest.permission.READ_MEDIA_IMAGES,
                         Manifest.permission.VIBRATE,
+                        Manifest.permission.CAMERA,
                         Manifest.permission.READ_EXTERNAL_STORAGE},
                 PERMISSION_REQUEST_CODE);
     }
@@ -178,6 +179,10 @@ public class LoginActivity extends AppCompatActivity {
         textview = findViewById(R.id.RegisterNow);
         forget = findViewById(R.id.passwordForget);
         botongoogle=findViewById(R.id.btn_login_Google);
+
+
+
+
         // Verificar si los permisos están otorgados
         if (checkPermissions()) {
             // Los permisos ya están otorgados

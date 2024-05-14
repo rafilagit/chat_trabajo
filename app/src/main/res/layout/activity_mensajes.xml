@@ -65,14 +65,22 @@
 
     </LinearLayout>
 
-<ImageButton
-android:id="@+id/botonScrollAbajo"
-android:layout_width="39dp"
-android:layout_height="32dp"
-android:layout_margin="16dp"
-android:background="@drawable/flecha_abajo"
-android:layout_above="@id/layoutMensaje"
-android:layout_alignParentEnd="true" />
+    <ImageButton
+        android:id="@+id/botonScrollAbajo"
+        android:layout_width="39dp"
+        android:layout_height="32dp"
+        android:layout_margin="16dp"
+        android:background="@drawable/flecha_abajo"
+        android:layout_above="@id/layoutMensaje"
+        android:layout_alignParentEnd="true" />
+
+    <ImageButton
+        android:id="@+id/botonLLamada"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:background="@drawable/llamada" />
 
 
 </RelativeLayout>

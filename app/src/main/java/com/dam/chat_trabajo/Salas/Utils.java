@@ -1,4 +1,4 @@
-package com.dam.chat_trabajo;
+package com.dam.chat_trabajo.Salas;
 
 import java.util.Random;
 

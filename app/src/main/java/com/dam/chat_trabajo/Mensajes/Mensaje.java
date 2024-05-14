@@ -1,4 +1,4 @@
-package com.dam.chat_trabajo;
+package com.dam.chat_trabajo.Mensajes;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
