@@ -98,6 +98,7 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
     private MensajeAdapter adapter;
     private EditText editTextMensaje;
     private ImageButton buttonEnviar;
+    private ImageButton buttonLlamada;
     private ImageButton botonScrollAbajo; // Declarar el botón de scroll hacia abajo
     private FirebaseAuth auth;
     private FirebaseUser usuario;
@@ -147,6 +148,7 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
         editTextMensaje = findViewById(R.id.editTextMensaje);
         buttonEnviar = findViewById(R.id.buttonEnviar);
         buttonAudio = findViewById(R.id.buttonAudio);
+        buttonLlamada = findViewById(R.id.botonLLamada);
         vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         botonScrollAbajo = findViewById(R.id.botonScrollAbajo); // Obtener referencia al botón de scroll hacia abajo
         auth = FirebaseAuth.getInstance();
@@ -203,6 +205,15 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                 listView.smoothScrollToPosition(adapter.getCount() - 1);
             }
         });
+
+        buttonLlamada.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MensajesActivity.this, Llamadas.class);
+                startActivity(intent);
+            }
+        });
+
 
         // Ocultar el botón de scroll hacia abajo al inicio
         botonScrollAbajo.setVisibility(View.GONE);
@@ -308,16 +319,12 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
     }
 
 
-
-
     // Método para verificar si es posible hacer scroll hacia abajo
     private boolean canScrollDown(ListView listView) {
         final int lastItemPosition = listView.getLastVisiblePosition();
         final int lastVisiblePosition = listView.getChildCount() - 1;
         return lastItemPosition >= lastVisiblePosition && lastVisiblePosition > 0;
     }
-
-
 
 
     private void suscribirListenerMensajes(String nombreSala, String idSala, ArrayList<String> participantesSala) {

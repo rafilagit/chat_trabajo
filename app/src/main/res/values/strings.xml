@@ -23,4 +23,8 @@
     <string name="introduzca_su_contrase_a">Introduzca su Contraseña:</string>
     <string name="vuelva_a_introducir_su_contrase_a">Vuelva a introducir su Contraseña:</string>
     <string name="cliente_is">1054010606330-u95brmpr3qeju47ijum60049q6lei24e.apps.googleusercontent.com</string>
+    <string name="meeting_id">Meeting ID:</string>
+    <string name="join">Join</string>
+    <string name="enter_meeting_id">Introduce el ID</string>
+    <string name="join_meeting">Entrar en la Videollamada</string>
 </resources>
