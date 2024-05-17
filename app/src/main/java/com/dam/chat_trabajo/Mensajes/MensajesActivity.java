@@ -72,6 +72,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
@@ -96,6 +97,7 @@ import android.widget.AbsListView;
 public class MensajesActivity extends AppCompatActivity implements MensajeAdapter.OnImageMessageLongClickListener, MensajeAdapter.OnLocationClickListener {
 
     private ListView listView;
+    private ImageView imageViewFondoSala;
     private MensajeAdapter adapter;
     private EditText editTextMensaje;
     private ImageButton buttonEnviar;
@@ -124,6 +126,9 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
 
     private String lastSelectedLocation; // Variable para almacenar la última ubicación seleccionada
 
+
+
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -140,6 +145,7 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mensajes);
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
+        imageViewFondoSala = findViewById(R.id.imageViewFondoSala);
 
         // Recuperar los parámetros del Intent
         Intent intent = getIntent();
@@ -152,9 +158,25 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
             Log.d("MensajesActivity", "Nombre de la sala: " + nombreSala);
             Log.d("MensajesActivity", "ID de la sala: " + idSala);
             Log.d("MensajesActivity", "Participantes de la sala: " + participantesSala);
+            int imagenId = intent.getIntExtra("imagen", 0);
+            if (imagenId != 0) {
+                // Establecer la imagen de fondo en el ImageView
+                imageViewFondoSala.setImageResource(imagenId);
+            } else {
+                // Manejar caso donde no se proporcionó un ID válido de imagen de fondo
+                imageViewFondoSala.setImageResource(R.drawable.fondo_default);
+            }
+
+            obtenerImagenDeFondoParaSala(idSala, new ImagenFondoCallback() {
+                @Override
+                public void onImagenFondoObtenida(int imagenId) {
+                    // Este método se ejecutará cuando se haya obtenido el ID de la imagen de fondo
+                    imageViewFondoSala.setImageResource(imagenId);
+                }
+            });
+
+
         }
-
-
         listView = findViewById(R.id.listView);
         editTextMensaje = findViewById(R.id.editTextMensaje);
         buttonEnviar = findViewById(R.id.buttonEnviar);
@@ -260,7 +282,6 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
                 }
             }
         });
-
 
 
         // Ocultar el botón de scroll hacia abajo al inicio
@@ -1406,6 +1427,40 @@ public class MensajesActivity extends AppCompatActivity implements MensajeAdapte
 
 
 
+    private void obtenerImagenDeFondoParaSala(String idSala, ImagenFondoCallback callback){
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+        // Construye la referencia al documento dentro de la estructura de colecciones
+        DocumentReference salaRef = db.collection("chat")
+                .document("salas_aux")
+                .collection("salas")
+                .document(idSala);
+
+        salaRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    // Obtén el ID de la imagen de fondo del documento
+                    Long imagenId = document.getLong("imagen");
+                    if (imagenId != null) {
+                        int idDrawable = imagenId.intValue();
+                        callback.onImagenFondoObtenida(idDrawable);
+                    } else {
+                        Log.d("obtenerImagenDeFondo", "ID de imagen es nulo para la sala con ID: " + idSala);
+                        callback.onImagenFondoObtenida(R.drawable.fondo_default); // Usar imagen por defecto si no se encuentra el ID
+                    }
+                } else {
+                    Log.d("obtenerImagenDeFondo", "No se encontró documento para la sala con ID: " + idSala);
+                    callback.onImagenFondoObtenida(R.drawable.fondo_default); // Usar imagen por defecto si el documento no existe
+                }
+            } else {
+                Log.d("obtenerImagenDeFondo", "Error al obtener documento de la sala con ID: " + idSala, task.getException());
+                callback.onImagenFondoObtenida(R.drawable.fondo_default); // Usar imagen por defecto en caso de error
+            }
+    });
+}
+    interface ImagenFondoCallback {
+        void onImagenFondoObtenida(int imagenId);
+    }
 }
 

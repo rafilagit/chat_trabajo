@@ -1,17 +1,22 @@
 package com.dam.chat_trabajo.Salas;
 
 import android.content.Intent;
+import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -68,8 +73,10 @@ public class MainActivity extends AppCompatActivity {
         usuario = auth.getCurrentUser();
         db = FirebaseFirestore.getInstance();
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
-
-
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setTitle("");  // Establecer el título como una cadena vacía
+        }
         if (usuario == null) {
             // Si el usuario no está autenticado, redirigir a la pantalla de inicio de sesión
             Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
@@ -105,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
                     // Agregar parámetros extra al intent
                     intent.putExtra("nombreSala", salaSeleccionada.getNombre());
                     intent.putExtra("idSala", salaSeleccionada.getId());
+                    intent.putExtra("imagen", salaSeleccionada.getImagen());
                     intent.putStringArrayListExtra("participantesSala", new ArrayList<>(salaSeleccionada.getParticipantes()));
 
                     // Iniciar la actividad de mensajes
@@ -118,8 +126,10 @@ public class MainActivity extends AppCompatActivity {
             suscribirListenerSalas();
         }
 
-        Button botonCerrarSesion = findViewById(R.id.logout);
-        Button botonCrearSala = findViewById(R.id.crearSala);
+        ImageButton botonCerrarSesion = findViewById(R.id.logout);
+        botonCerrarSesion.setImageResource(R.drawable.logout_ic);
+        ImageButton botonCrearSala = findViewById(R.id.crearSala);
+        botonCrearSala.setImageResource(R.drawable.crearsala_ic);
 
         botonCerrarSesion.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -153,6 +163,10 @@ public class MainActivity extends AppCompatActivity {
                                 String nombreSala = document.getString("nombre");
                                 String participantesString = (String) document.get("usuarios");
                                 List<String> participantes = null;
+                                String admin = document.getString("admin");
+                                Long imagenLong = document.getLong("imagen");
+                                int imagen = (imagenLong != null) ? imagenLong.intValue() : 0;
+
                                 if (participantesString != null && !participantesString.isEmpty()) {
                                     // Eliminar la última coma si existe
                                     if (participantesString.charAt(participantesString.length() - 1) == ',') {
@@ -173,8 +187,7 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                     if (!salaExistente) {
                                         // Crear objeto Sala y añadirlo a la lista
-                                        Sala sala = new Sala(idSala, nombreSala, participantes);
-                                        salasList.add(sala);
+                                        Sala sala = new Sala(idSala, nombreSala, participantes, admin, imagen);                                        salasList.add(sala);
                                     }
                                 }
                             }
@@ -215,12 +228,21 @@ public class MainActivity extends AppCompatActivity {
                 UsuariosAdapter usuariosAdapter = new UsuariosAdapter(nombresUsuarios);
                 recyclerViewUsuarios.setAdapter(usuariosAdapter);
 
+                Spinner spinnerBackgroundImages = dialogLayout.findViewById(R.id.spinnerBackgroundImages);
+                // Configurar Spinner con las opciones de imágenes de fondo
+                String[] nombresImagenes = {"Fondo Default", "Fondo Agua", "Fondo Árboles", "Fondo Atardecer", "Fondo Nubes", "Fondo Noche", "Fondo Burbujas"};
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, nombresImagenes);
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinnerBackgroundImages.setAdapter(adapter);
+
+
                 // Construir el diálogo flotante (ya existe)
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setView(dialogLayout);
                 builder.setTitle("Crear Sala");
                 builder.setPositiveButton("Crear", (dialog, which) -> {
                     // Obtener el nombre de la sala
+
                     String nombreSala = editTextNombreSala.getText().toString().trim();
 
                     // Validar que se ingresó un nombre de sala
@@ -231,6 +253,8 @@ public class MainActivity extends AppCompatActivity {
 
                     // Obtener los usuarios seleccionados
                     List<String> usuariosSeleccionados = usuariosAdapter.getUsuariosSeleccionados();
+                    String selectedBackground = (String) spinnerBackgroundImages.getSelectedItem();
+
 
                     // Añadir tu nombre de usuario a la lista
                     if (!usuariosSeleccionados.contains(nombreUsuario)) {
@@ -251,6 +275,8 @@ public class MainActivity extends AppCompatActivity {
                     sala.put("nombre", nombreSala);
                     sala.put("usuarios", usuariosString.toString());
                     sala.put("salaId", idSala); // Agregar el ID de la sala al mapa
+                    sala.put("admin", obtenerNombreUsuario(FirebaseAuth.getInstance().getCurrentUser().getEmail())); // Obtener el nombre del usuario actual como admin
+                    sala.put("imagen", obtenerImagenId(selectedBackground)); // Guardar la ID de la imagen de fondo
 
                     // Añadir la sala al Firestore con el identificador único como nombre de la colección
                     db.collection("chat")
@@ -295,6 +321,34 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
+    private int obtenerImagenId(String nombreImagen) {
+        int imagenId = 0; // Valor predeterminado en caso de que no se encuentre la imagen
+
+        // Mapa que relaciona los nombres de las imágenes con sus IDs en /res/drawable
+        HashMap<String, Integer> mapaImagenes = new HashMap<>();
+        mapaImagenes.put("Fondo Default", R.drawable.fondo_default);
+        mapaImagenes.put("Fondo Agua", R.drawable.fondo_agua);
+        mapaImagenes.put("Fondo Árboles", R.drawable.fondo_arboles);
+        mapaImagenes.put("Fondo Atardecer", R.drawable.fondo_atardecer);
+        mapaImagenes.put("Fondo Nubes", R.drawable.fondo_nubes);
+        mapaImagenes.put("Fondo Noche", R.drawable.fondo_noche);
+        mapaImagenes.put("Fondo Burbujas", R.drawable.fondo_burbujas);
+
+        // Verificar si el nombre de la imagen existe en el mapa
+        if (mapaImagenes.containsKey(nombreImagen)) {
+            imagenId = mapaImagenes.get(nombreImagen);
+        } else {
+            // Si el nombre de la imagen no se encuentra, podemos manejarlo según las necesidades
+            // Por ejemplo, mostrar una imagen predeterminada o lanzar una excepción
+            // También puedes retornar un valor predeterminado o null
+            // Aquí, se asigna 0 como valor predeterminado si no se encuentra la imagen
+            // Pero podemos modificar esto según se necesite en la aplicación
+            Log.e("MainActivity", "Nombre de imagen no válido: " + nombreImagen);
+        }
+
+        return imagenId;
+    }
 
     private void obtenerNombresUsuarios(OnUsuariosObtenidosListener listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -355,15 +409,11 @@ public class MainActivity extends AppCompatActivity {
                                 .update(nombreUsuario, true)
                                 .addOnSuccessListener(aVoid -> {
                                     // Campo de usuario actualizado exitosamente
-                                    Toast.makeText(MainActivity.this, "Es tu primera vez en el chat? "+nombreUsuario, Toast.LENGTH_SHORT).show();
                                 })
                                 .addOnFailureListener(e -> {
                                     // Error al actualizar el campo de usuario
                                     Toast.makeText(MainActivity.this, "Error al actualizar el nombre de usuario: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                 });
-                    } else {
-                        // Ya existe un campo con el nombre de usuario
-                        Toast.makeText(MainActivity.this, "Bienvenido "+nombreUsuario, Toast.LENGTH_SHORT).show();
                     }
                 })
                 .addOnFailureListener(e -> {
