@@ -23,6 +23,14 @@
           }
         },
         {
+          "client_id": "1054010606330-fb8i86psmq160r8mkl3hpjcas30uupi9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dam.chat_Trabajo",
+            "certificate_hash": "a658a4a0e42f2be76d3bd72e6c41b3719dfd2518"
+          }
+        },
+        {
           "client_id": "1054010606330-u95brmpr3qeju47ijum60049q6lei24e.apps.googleusercontent.com",
           "client_type": 3
         }

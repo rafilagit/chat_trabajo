@@ -3,15 +3,23 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Fondo de pantalla -->
+    <ImageView
+        android:id="@+id/imageViewFondoSala"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/fondo_default"/>
+
     <ListView
         android:id="@+id/listView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/layoutMensaje"
         android:divider="@null"
-        android:dividerHeight="3dp"
-        android:paddingLeft="5dp"
-        android:paddingRight="8dp"
+        android:dividerHeight="5dp"
+        android:paddingLeft="20dp"
+        android:paddingRight="25dp"
         android:clipToPadding="false" />
 
     <LinearLayout
@@ -65,14 +73,21 @@
 
     </LinearLayout>
 
-<ImageButton
-android:id="@+id/botonScrollAbajo"
-android:layout_width="39dp"
-android:layout_height="32dp"
-android:layout_margin="16dp"
-android:background="@drawable/flecha_abajo"
-android:layout_above="@id/layoutMensaje"
-android:layout_alignParentEnd="true" />
+    <ImageButton
+        android:id="@+id/botonScrollAbajo"
+        android:layout_width="45dp"
+        android:layout_height="37dp"
+        android:background="@drawable/flecha_abajo"
+        android:layout_above="@id/layoutMensaje"
+        android:layout_alignParentEnd="true" />
+
+    <ImageButton
+        android:id="@+id/botonLLamada"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:background="@drawable/llamada" />
 
 
 </RelativeLayout>

@@ -28,12 +28,40 @@
         android:adjustViewBounds="true"
         android:visibility="gone" />
 
-    <Button
-        android:id="@+id/btnReproducirAudio"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Reproducir"
-        android:visibility="gone" />
+    <ImageView
+        android:id="@+id/barra"
+        android:layout_width="143dp"
+        android:layout_height="57dp"
+        android:layout_marginLeft="84dp"
+        android:layout_marginTop="-4dp"
+        android:background="@null"
+        android:contentDescription="Boton pausa"
+        android:scaleType="centerInside"
+        android:src="@drawable/barra"
+/>
+    <ImageView
+        android:id="@+id/onda"
+        android:layout_width="110dp"
+        android:layout_height="51dp"
+        android:layout_marginLeft="105dp"
+        android:layout_marginTop="-1dp"
+        android:background="@null"
+        android:contentDescription=" onda"
+        android:scaleType="centerInside"
+        android:src="@drawable/ondas"
+        />
+
+    <ImageButton
+        android:id="@+id/buttonReproducir"
+        android:layout_width="40dp"
+        android:layout_height="37dp"
+        android:layout_marginTop="7dp"
+        android:layout_marginLeft="86dp"
+        android:background="@null"
+        android:contentDescription="Boton reproducir"
+        android:scaleType="centerInside"
+        android:src="@drawable/reproducir"
+        />
 
 
     <TextView

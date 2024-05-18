@@ -1,32 +1,63 @@
-<!-- item_sala.xml -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/frameLayout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
     android:padding="16dp"
     android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    android:background="@color/soft_yellow">
 
-    <TextView
-        android:id="@+id/btnSala"
+
+    <!-- Contenedor principal del contenido -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Nombre de la Sala"
-        android:textSize="20sp"
-        android:textStyle="bold"/>
+        android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/tvParticipantes"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Participantes: Usuario1, Usuario2, Usuario3"
-        android:textSize="14sp"/>
+        <!-- Parte izquierda con contenido -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tvIdSala"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="ID de la Sala: 123456"
-        android:textSize="14sp"/>
+            <TextView
+                android:id="@+id/btnSala"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Nombre de la Sala"
+                android:textSize="20sp"
+                android:textStyle="bold"/>
 
-</LinearLayout>
+            <TextView
+                android:id="@+id/tvParticipantes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Participantes: Usuario1, Usuario2, Usuario3"
+                android:textSize="14sp"/>
+
+        </LinearLayout>
+
+        <!-- Parte derecha para el color de fondo -->
+        <View
+            android:id="@+id/colorView"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:background="@color/celeste"
+            android:layout_marginLeft="10dp"/> <!-- Cambia @color/celeste por tu color deseado -->
+        <!-- Botón para eliminar sala -->
+        <Button
+            android:id="@+id/btnEliminarSala"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Eliminar"
+            android:layout_gravity="bottom|start"
+            android:layout_marginBottom="3dp"
+            android:layout_marginStart="8dp"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#FF0000" />
+    </LinearLayout>
+
+
+
+</FrameLayout>
